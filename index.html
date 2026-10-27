@@ -1,0 +1,3054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Urban Mesh | Smart Chandigarh Integrated Platform</title>
+  <meta name="description" content="Urban Mesh: Integrated Smart City Platform for Chandigarh — Unifying Waste Management, Urban Mobility, and Public Safety with 3D Digital Twin. Academic Prototype for Code Yudh Hackathon, Chandigarh University.">
+  <meta name="theme-color" content="#0A0E27">
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- External CDN Libraries (Three.js & Chart.js) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* ==========================================================================
+       URBAN MESH DESIGN SYSTEM & BASE TOKENS
+       ========================================================================== */
+    :root {
+      --bg-dark: #0A0E27;
+      --bg-gradient-end: #111B3C;
+      --surface: #111B3C;
+      --surface-glass: rgba(17, 27, 60, 0.72);
+      --surface-glass-card: rgba(17, 27, 60, 0.55);
+      --surface-hover: rgba(26, 41, 88, 0.85);
+      --border: #1E2A4A;
+      --border-light: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(0, 180, 216, 0.35);
+
+      --primary: #00B4D8;
+      --primary-glow: rgba(0, 180, 216, 0.45);
+      --accent: #06D6A0;
+      --accent-glow: rgba(6, 214, 160, 0.35);
+      --alert: #FF6B6B;
+      --alert-glow: rgba(255, 107, 107, 0.35);
+      --warning: #FFD166;
+      --warning-glow: rgba(255, 209, 102, 0.3);
+
+      --text: #E2E8F0;
+      --text-muted: #94A3B8;
+      --text-subtle: #64748B;
+      --text-white: #FFFFFF;
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+      --radius-pill: 9999px;
+
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+      --shadow-glow: 0 0 25px rgba(0, 180, 216, 0.35);
+
+      --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-normal: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* CSS Reset & Global Layout */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      color-scheme: dark;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-dark);
+      background: radial-gradient(circle at 50% 10%, #172554 0%, var(--bg-dark) 55%, #050714 100%);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      position: relative;
+    }
+
+    /* ==========================================================================
+       CANVAS & BACKGROUND AMBIENCE
+       ========================================================================== */
+    #mesh-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.75;
+    }
+
+    .ambient-glow {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      filter: blur(120px);
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.18;
+      transition: transform 1s ease-out;
+    }
+
+    .glow-cyan {
+      top: -150px;
+      left: -100px;
+      background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+      animation: floatSlow 18s ease-in-out infinite alternate;
+    }
+
+    .glow-emerald {
+      bottom: -150px;
+      right: -100px;
+      background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+      animation: floatSlow 22s ease-in-out infinite alternate-reverse;
+    }
+
+    @keyframes floatSlow {
+      0% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(60px, 40px) scale(1.1); }
+      100% { transform: translate(-40px, 70px) scale(0.95); }
+    }
+
+    /* ==========================================================================
+       CONTAINER & LAYOUT
+       ========================================================================== */
+    .app-wrapper {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ==========================================================================
+       HEADER & NAVIGATION
+       ========================================================================== */
+    .main-nav {
+      padding: 20px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-light);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: rgba(10, 14, 39, 0.7);
+      margin-bottom: 30px;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+    }
+
+    .brand-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, rgba(0, 180, 216, 0.2), rgba(6, 214, 160, 0.2));
+      border: 1px solid var(--border-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 15px rgba(0, 180, 216, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-icon-box::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+      transform: rotate(45deg);
+      animation: shine 4s infinite;
+    }
+
+    @keyframes shine {
+      0% { transform: translateX(-150%) rotate(45deg); }
+      30%, 100% { transform: translateX(150%) rotate(45deg); }
+    }
+
+    .brand-text-wrapper {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: var(--text-white);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand-title span {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-subtitle {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    .nav-status-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(6, 214, 160, 0.1);
+      border: 1px solid rgba(6, 214, 160, 0.3);
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.03em;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent);
+      animation: pulseAlert 2s infinite ease-in-out;
+    }
+
+    @keyframes pulseAlert {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.5; box-shadow: 0 0 14px var(--accent); }
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      list-style: none;
+    }
+
+    .nav-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: var(--transition-fast);
+      position: relative;
+      padding: 6px 2px;
+    }
+
+    .nav-link:hover, .nav-link:focus {
+      color: var(--primary);
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--primary);
+      transition: var(--transition-fast);
+      border-radius: 2px;
+    }
+
+    .nav-link:hover::after {
+      width: 100%;
+    }
+
+    /* Sound Control Button */
+    .icon-btn {
+      background: var(--surface-glass);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-family: inherit;
+      transition: var(--transition-fast);
+    }
+
+    .icon-btn:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+      border-color: var(--border-accent);
+    }
+
+    /* ==========================================================================
+       HERO SECTION
+       ========================================================================== */
+    .hero-section {
+      text-align: center;
+      padding: 40px 10px 50px;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .hackathon-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(0, 180, 216, 0.08);
+      border: 1px solid rgba(0, 180, 216, 0.25);
+      padding: 6px 18px;
+      border-radius: var(--radius-pill);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 24px;
+      box-shadow: 0 0 20px rgba(0, 180, 216, 0.15);
+      animation: fadeInDown 0.8s ease-out;
+    }
+
+    .hackathon-badge .tag {
+      background: rgba(255, 209, 102, 0.15);
+      color: var(--warning);
+      border: 1px solid rgba(255, 209, 102, 0.35);
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    .hero-title {
+      font-size: clamp(2.8rem, 6.5vw, 5rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      position: relative;
+      display: inline-block;
+    }
+
+    .hero-title-text {
+      background: linear-gradient(135deg, #FFFFFF 0%, #BAE6FD 35%, var(--primary) 70%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 24px rgba(0, 180, 216, 0.4));
+      animation: textGlowPulse 4s infinite alternate;
+    }
+
+    @keyframes textGlowPulse {
+      0% {
+        filter: drop-shadow(0 0 15px rgba(0, 180, 216, 0.35));
+      }
+      100% {
+        filter: drop-shadow(0 0 35px rgba(6, 214, 160, 0.65)) drop-shadow(0 0 10px rgba(0, 180, 216, 0.8));
+      }
+    }
+
+    .hero-subtitle {
+      font-size: clamp(1.2rem, 2.5vw, 1.7rem);
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.01em;
+      margin-bottom: 12px;
+    }
+
+    .hero-tagline {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+      font-size: clamp(0.95rem, 1.8vw, 1.15rem);
+      font-weight: 500;
+      color: var(--primary);
+      margin-bottom: 24px;
+    }
+
+    .tagline-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tagline-bullet {
+      color: var(--accent);
+      font-size: 0.8rem;
+    }
+
+    .hero-description {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      line-height: 1.75;
+      max-width: 820px;
+      margin: 0 auto 36px;
+    }
+
+    /* Live Telemetry Ticker */
+    .telemetry-ticker {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      background: var(--surface-glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 20px;
+      margin: 0 auto 40px;
+      max-width: 900px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .ticker-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 12px;
+      border-right: 1px solid var(--border-light);
+    }
+
+    .ticker-item:last-child {
+      border-right: none;
+    }
+
+    .ticker-val {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text-white);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .ticker-val.cyan { color: var(--primary); }
+    .ticker-val.green { color: var(--accent); }
+    .ticker-val.amber { color: var(--warning); }
+
+    .ticker-lbl {
+      font-size: 0.72rem;
+      color: var(--text-subtle);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    /* ==========================================================================
+       TWO LARGE GLASSMORPHISM CARDS (PRIMARY LAUNCHPAD)
+       ========================================================================== */
+    .launchpad-section {
+      margin-bottom: 60px;
+    }
+
+    .launchpad-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    @media (max-width: 1120px) {
+      .launchpad-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .launch-card {
+      position: relative;
+      background: var(--surface-glass-card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 32px 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: var(--transition-normal);
+      overflow: hidden;
+      cursor: default;
+      box-shadow: var(--shadow-md);
+    }
+
+    .launch-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, var(--primary), transparent);
+      opacity: 0.8;
+      transition: var(--transition-normal);
+    }
+
+    .launch-card.admin-card::before {
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+
+    .launch-card.twin-card::before {
+      background: linear-gradient(90deg, transparent, #A855F7, transparent);
+    }
+
+    .launch-card:hover {
+      transform: translateY(-8px);
+      border-color: var(--border-accent);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 180, 216, 0.25);
+    }
+
+    .launch-card.admin-card:hover {
+      border-color: rgba(6, 214, 160, 0.45);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6), 0 0 30px rgba(6, 214, 160, 0.25);
+    }
+
+    .launch-card.twin-card:hover {
+      border-color: rgba(168, 85, 247, 0.45);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6), 0 0 30px rgba(168, 85, 247, 0.25);
+    }
+
+    /* Subtle Card Aura Glow */
+    .card-aura {
+      position: absolute;
+      width: 250px;
+      height: 250px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 180, 216, 0.15) 0%, transparent 70%);
+      top: -80px;
+      right: -80px;
+      pointer-events: none;
+      transition: var(--transition-normal);
+    }
+
+    .launch-card.admin-card .card-aura {
+      background: radial-gradient(circle, rgba(6, 214, 160, 0.15) 0%, transparent 70%);
+    }
+
+    .launch-card:hover .card-aura {
+      transform: scale(1.3);
+      opacity: 0.8;
+    }
+
+    .card-top-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .card-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 5px 12px;
+      border-radius: var(--radius-pill);
+      background: rgba(0, 180, 216, 0.12);
+      color: var(--primary);
+      border: 1px solid rgba(0, 180, 216, 0.25);
+    }
+
+    .launch-card.admin-card .card-badge {
+      background: rgba(6, 214, 160, 0.12);
+      color: var(--accent);
+      border-color: rgba(6, 214, 160, 0.25);
+    }
+
+    .card-device-pill {
+      font-size: 0.75rem;
+      color: var(--text-subtle);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .card-title-group {
+      margin-bottom: 16px;
+    }
+
+    .card-main-title {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--text-white);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .card-icon-emoji {
+      font-size: 2.2rem;
+      filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
+    }
+
+    .card-desc-highlight {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+
+    .launch-card.admin-card .card-desc-highlight {
+      color: var(--accent);
+    }
+
+    .card-desc-body {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    /* Interactive Preview Box */
+    .preview-box {
+      background: rgba(10, 14, 39, 0.85);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-bottom: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .preview-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.82rem;
+    }
+
+    .preview-label {
+      color: var(--text-subtle);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .preview-value {
+      color: var(--text);
+      font-weight: 600;
+      font-family: monospace;
+    }
+
+    .preview-bar-bg {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-pill);
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .preview-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      border-radius: var(--radius-pill);
+      transition: width 1s ease-in-out;
+    }
+
+    .feature-check-list {
+      list-style: none;
+      margin-bottom: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .feature-check-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    .check-icon {
+      color: var(--accent);
+      font-size: 0.95rem;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    /* Launch Action Button */
+    .launch-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      padding: 16px 24px;
+      border-radius: var(--radius-md);
+      font-size: 1.05rem;
+      font-weight: 700;
+      text-decoration: none;
+      color: var(--text-white);
+      background: linear-gradient(135deg, #0096C7, #00B4D8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 15px rgba(0, 180, 216, 0.35);
+      transition: var(--transition-normal);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .launch-btn::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transform: rotate(45deg) translateX(-150%);
+      transition: transform 0.6s ease;
+    }
+
+    .launch-btn:hover::after {
+      transform: rotate(45deg) translateX(150%);
+    }
+
+    .launch-btn:hover {
+      background: linear-gradient(135deg, #00B4D8, #48CAE4);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 180, 216, 0.55);
+    }
+
+    .launch-btn.admin-btn {
+      background: linear-gradient(135deg, #059669, #06D6A0);
+      box-shadow: 0 4px 15px rgba(6, 214, 160, 0.35);
+    }
+
+    .launch-btn.admin-btn:hover {
+      background: linear-gradient(135deg, #06D6A0, #34D399);
+      box-shadow: 0 8px 25px rgba(6, 214, 160, 0.55);
+    }
+
+    .btn-arrow {
+      font-size: 1.2rem;
+      transition: transform 0.3s ease;
+    }
+
+    .launch-btn:hover .btn-arrow {
+      transform: translateX(6px);
+    }
+
+    /* ==========================================================================
+       KEY FEATURES SECTION (6 ICON CARDS)
+       ========================================================================== */
+    .features-section {
+      margin-bottom: 70px;
+    }
+
+    .section-header-box {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .section-tag {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+      display: inline-block;
+    }
+
+    .section-heading {
+      font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+      font-weight: 800;
+      color: var(--text-white);
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+
+    .section-subheading {
+      font-size: 1rem;
+      color: var(--text-muted);
+      max-width: 650px;
+      margin: 0 auto;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--surface-glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 28px 24px;
+      transition: var(--transition-normal);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card:hover {
+      border-color: var(--border-accent);
+      transform: translateY(-6px);
+      background: var(--surface-hover);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45), 0 0 20px rgba(0, 180, 216, 0.15);
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      background: var(--primary);
+      opacity: 0.6;
+      transition: var(--transition-fast);
+    }
+
+    .feature-card:nth-child(2)::before { background: var(--alert); }
+    .feature-card:nth-child(3)::before { background: var(--accent); }
+    .feature-card:nth-child(4)::before { background: var(--warning); }
+    .feature-card:nth-child(5)::before { background: var(--primary); }
+    .feature-card:nth-child(6)::before { background: var(--accent); }
+
+    .feature-card:hover::before {
+      width: 5px;
+      opacity: 1;
+    }
+
+    .feature-icon-wrapper {
+      width: 54px;
+      height: 54px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+      transition: var(--transition-fast);
+    }
+
+    .feature-card:hover .feature-icon-wrapper {
+      transform: scale(1.1);
+      border-color: var(--primary-glow);
+      background: rgba(0, 180, 216, 0.1);
+    }
+
+    .feature-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-white);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .feature-pillar-tag {
+      font-size: 0.68rem;
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .tag-safety { background: rgba(255, 107, 107, 0.15); color: var(--alert); border: 1px solid rgba(255, 107, 107, 0.3); }
+    .tag-mobility { background: rgba(0, 180, 216, 0.15); color: var(--primary); border: 1px solid rgba(0, 180, 216, 0.3); }
+    .tag-waste { background: rgba(255, 209, 102, 0.15); color: var(--warning); border: 1px solid rgba(255, 209, 102, 0.3); }
+    .tag-twin { background: rgba(6, 214, 160, 0.15); color: var(--accent); border: 1px solid rgba(6, 214, 160, 0.3); }
+    .tag-privacy { background: rgba(148, 163, 184, 0.15); color: #CBD5E1; border: 1px solid rgba(148, 163, 184, 0.3); }
+
+    .feature-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 16px;
+      flex-grow: 1;
+    }
+
+    .feature-micro-metric {
+      font-size: 0.75rem;
+      color: var(--text-subtle);
+      border-top: 1px solid var(--border-light);
+      padding-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .feature-micro-metric strong {
+      color: var(--text);
+    }
+
+    /* ==========================================================================
+       CHANDIGARH SECTORS & ARCHITECTURE SHOWCASE
+       ========================================================================== */
+    .context-section {
+      background: var(--surface-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 40px;
+      margin-bottom: 60px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .context-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 36px;
+      align-items: center;
+    }
+
+    .context-content h3 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--text-white);
+      margin-bottom: 14px;
+      line-height: 1.3;
+    }
+
+    .context-content p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+
+    .sector-badge-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .sector-badge {
+      font-size: 0.75rem;
+      padding: 5px 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sector-badge.special {
+      border-color: var(--border-accent);
+      background: rgba(0, 180, 216, 0.1);
+      color: var(--primary);
+    }
+
+    /* Interactive 3D Sector Grid Preview Box */
+    .interactive-grid-box {
+      background: #060919;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      min-height: 320px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .grid-schematic {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin: 16px 0;
+    }
+
+    .grid-node {
+      background: rgba(17, 27, 60, 0.6);
+      border: 1px solid rgba(0, 180, 216, 0.2);
+      border-radius: var(--radius-sm);
+      padding: 10px 6px;
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: var(--transition-fast);
+      position: relative;
+    }
+
+    .grid-node:hover {
+      background: rgba(0, 180, 216, 0.25);
+      border-color: var(--primary);
+      color: var(--text-white);
+      transform: scale(1.04);
+      cursor: pointer;
+    }
+
+    .grid-node.active-pink {
+      border-color: var(--alert);
+      background: rgba(255, 107, 107, 0.15);
+      color: #FFA8A8;
+    }
+
+    .grid-node.active-hosp {
+      border-color: var(--accent);
+      background: rgba(6, 214, 160, 0.15);
+      color: var(--accent);
+    }
+
+    .grid-legend {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--text-subtle);
+      border-top: 1px solid var(--border-light);
+      padding-top: 12px;
+      margin-top: 8px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legend-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    /* ==========================================================================
+       TECHNOLOGY BADGES SECTION
+       ========================================================================== */
+    .tech-section {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .tech-badges-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .tech-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface-glass);
+      border: 1px solid var(--border);
+      padding: 8px 18px;
+      border-radius: var(--radius-pill);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      transition: var(--transition-fast);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .tech-badge:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .tech-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    /* ==========================================================================
+       MODAL: PROTOTYPE QUICK TOUR & ARCHITECTURE
+       ========================================================================== */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(5, 7, 20, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-container {
+      background: var(--surface);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius-xl);
+      max-width: 720px;
+      width: 100%;
+      padding: 32px;
+      box-shadow: var(--shadow-lg), 0 0 40px rgba(0, 180, 216, 0.2);
+      transform: scale(0.95);
+      transition: transform 0.3s ease;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .modal-overlay.open .modal-container {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-light);
+      padding-bottom: 14px;
+    }
+
+    .modal-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--text-white);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .close-modal-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      transition: var(--transition-fast);
+    }
+
+    .close-modal-btn:hover {
+      background: var(--alert);
+      color: white;
+      border-color: var(--alert);
+    }
+
+    .tour-steps-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .tour-step {
+      display: flex;
+      gap: 14px;
+      background: rgba(10, 14, 39, 0.6);
+      padding: 14px 18px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+    }
+
+    .step-number {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #0A0E27;
+      font-weight: 800;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-content h4 {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--text-white);
+      margin-bottom: 4px;
+    }
+
+    .step-content p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ==========================================================================
+       FOOTER & DISCLAIMER
+       ========================================================================== */
+    .site-footer {
+      border-top: 1px solid var(--border-light);
+      padding: 40px 0 30px;
+      margin-top: auto;
+      text-align: center;
+    }
+
+    .disclaimer-banner {
+      background: rgba(255, 107, 107, 0.08);
+      border: 1px solid rgba(255, 107, 107, 0.25);
+      border-radius: var(--radius-md);
+      padding: 16px 24px;
+      margin-bottom: 24px;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .disclaimer-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--alert);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .disclaimer-text {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .footer-bottom {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.8rem;
+      color: var(--text-subtle);
+    }
+
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      list-style: none;
+    }
+
+    .footer-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: var(--transition-fast);
+    }
+
+    .footer-link:hover {
+      color: var(--primary);
+    }
+
+    /* ==========================================================================
+       ANIMATIONS & MEDIA QUERIES
+       ========================================================================== */
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 1024px) {
+      .launchpad-grid {
+        grid-template-columns: 1fr;
+        max-width: 640px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .context-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .main-nav {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+      }
+
+      .nav-status-group {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-title {
+        font-size: 2.8rem;
+      }
+
+      .telemetry-ticker {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .ticker-item:nth-child(2) {
+        border-right: none;
+      }
+    }
+
+    /* Accessibility Focus Outline */
+    a:focus-visible, button:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Ambient Glow & Interactive Canvas -->
+  <div class="ambient-glow glow-cyan" aria-hidden="true"></div>
+  <div class="ambient-glow glow-emerald" aria-hidden="true"></div>
+  <canvas id="mesh-canvas" aria-hidden="true"></canvas>
+
+  <div class="app-wrapper">
+
+    <!-- ==========================================================================
+         TOP NAVIGATION BAR
+         ========================================================================== -->
+    <header class="main-nav" role="banner">
+      <a href="index.html" class="brand-group" aria-label="Urban Mesh Home">
+        <div class="brand-icon-box" aria-hidden="true" style="background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(168, 85, 247, 0.25)); border-color: rgba(0, 240, 255, 0.4);">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <div class="brand-text-wrapper">
+          <span class="brand-title">urbanmesh<span> AI</span></span>
+          <span class="brand-subtitle">Smart Chandigarh Unified Platform</span>
+        </div>
+      </a>
+
+      <div class="nav-status-group">
+        <div class="status-pill" role="status" aria-live="polite">
+          <div class="pulse-dot"></div>
+          <span>LIVE: 56 SECTORS CONNECTED</span>
+        </div>
+
+        <ul class="nav-links">
+          <li><a href="#launchpad" class="nav-link">Apps</a></li>
+          <li><a href="twin.html" class="nav-link" style="color: #00F0FF; font-weight: 700; text-shadow: 0 0 10px rgba(0,240,255,0.4);">🏙️ 3D Digital Twin</a></li>
+          <li><a href="presentation.html" class="nav-link" style="color: #FFB703; font-weight: 700; text-shadow: 0 0 10px rgba(255,183,3,0.4);">🎬 3D Hackathon Deck</a></li>
+          <li><a href="pdf_view.html" class="nav-link" style="color: #00FF88; font-weight: 700; text-shadow: 0 0 10px rgba(0,255,136,0.4);">📄 Pitch PDF</a></li>
+          <li><a href="#features" class="nav-link">Features</a></li>
+          <li><a href="#context" class="nav-link">Chandigarh Grid</a></li>
+          <li><a href="#tech" class="nav-link">Tech Stack</a></li>
+        </ul>
+
+        <button class="icon-btn" id="tour-btn" aria-label="Open Interactive Tour">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <span>Tour</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ==========================================================================
+         HERO SECTION
+         ========================================================================== -->
+    <main role="main">
+      <section class="hero-section" aria-labelledby="hero-title-id">
+        <div class="hackathon-badge">
+          <span>Code Yudh Hackathon 2026</span>
+          <span class="tag">PS-02 Smart & Sustainable Cities</span>
+          <span>Chandigarh University</span>
+        </div>
+
+        <h1 class="hero-title" id="hero-title-id">
+          <span class="hero-title-text" style="background: linear-gradient(135deg, #00F0FF 0%, #A855F7 50%, #00FF88 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 30px rgba(0,240,255,0.4));">URBAN MESH</span>
+        </h1>
+
+        <p class="hero-subtitle">Integrated Smart City Intelligence Platform for Chandigarh</p>
+
+        <div class="hero-tagline" aria-label="Core Pillars">
+          <span class="tagline-item">Smart Waste Optimization</span>
+          <span class="tagline-bullet">✦</span>
+          <span class="tagline-item">Urban Mobility & Green Corridors</span>
+          <span class="tagline-bullet">✦</span>
+          <span class="tagline-item">Suraksha Public Safety Mesh</span>
+        </div>
+
+        <p class="hero-description">
+          An edge-resilient civic intelligence ecosystem engineered specifically for Le Corbusier’s planned grid city. 
+          Urban Mesh fuses SafePath pedestrian safety routing, dynamic green corridors for emergency medical transit, 
+          and telemetric smart waste logistics into a synchronized 3D Digital Twin command deck.
+        </p>
+
+        <!-- Live Telemetry Ticker -->
+        <div class="telemetry-ticker" aria-label="Simulated City Telemetry">
+          <div class="ticker-item">
+            <div class="ticker-val cyan" id="stat-sectors">56 / 56</div>
+            <div class="ticker-lbl">Active Grid Sectors</div>
+          </div>
+          <div class="ticker-item">
+            <div class="ticker-val green" id="stat-safepath">98.4%</div>
+            <div class="ticker-lbl">SafePath Lighting Score</div>
+          </div>
+          <div class="ticker-item">
+            <div class="ticker-val amber" id="stat-bins">1,480</div>
+            <div class="ticker-lbl">Monitored Smart Bins</div>
+          </div>
+          <div class="ticker-item">
+            <div class="ticker-val green" id="stat-greenwave">7.2 min</div>
+            <div class="ticker-lbl">Ambulance to PGIMER</div>
+          </div>
+        </div>
+
+        <!-- 3D Hackathon Pitch Deck CTA Banner -->
+        <div style="margin-top: 32px; display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+          <a href="presentation.html" class="launch-btn" style="background: linear-gradient(135deg, #FFB703, #FF5E7E); color: #000; font-weight: 800; font-size: 1.05rem; padding: 14px 32px; border-radius: 30px; text-decoration: none; display: inline-flex; align-items: center; gap: 12px; box-shadow: 0 0 30px rgba(255, 183, 3, 0.45); transition: all 0.3s ease;">
+            <span>🚀 Open 3D Pitch Deck (3D PDF Presentation)</span>
+            <span style="font-size: 1.25rem;">➔</span>
+          </a>
+          <a href="twin.html" class="launch-btn" style="background: rgba(0, 240, 255, 0.15); border: 1px solid #00F0FF; color: #00F0FF; font-weight: 700; font-size: 1.05rem; padding: 14px 28px; border-radius: 30px; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; transition: all 0.3s ease;">
+            <span>🏙️ Launch 3D Digital Twin</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- ==========================================================================
+           TWO LARGE GLASSMORPHISM CARDS (PRIMARY LAUNCHPAD)
+           ========================================================================== -->
+      <section class="launchpad-section" id="launchpad" aria-label="Platform Launchpads">
+        <div class="launchpad-grid">
+
+          <!-- LEFT CARD: CITIZEN APP -->
+          <article class="launch-card" id="card-citizen">
+            <div class="card-aura" aria-hidden="true"></div>
+            <div>
+              <div class="card-top-meta">
+                <span class="card-badge">Citizen Experience</span>
+                <span class="card-device-pill">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                    <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                  </svg>
+                  Mobile PWA
+                </span>
+              </div>
+
+              <div class="card-title-group">
+                <h2 class="card-main-title">
+                  <span class="card-icon-emoji" aria-hidden="true">📱</span>
+                  Citizen App
+                </h2>
+                <div class="card-desc-highlight">
+                  SafePath routing, Women Safety toolkit, Civic reporting
+                </div>
+              </div>
+
+              <p class="card-desc-body">
+                Empowering Chandigarh residents with AI-scored safe transit corridors, instantaneous emergency panic relays, 
+                and direct civic hazard ticketing with real-time municipal tracking.
+              </p>
+
+              <!-- Interactive Live Preview Simulation -->
+              <div class="preview-box">
+                <div class="preview-row">
+                  <span class="preview-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00B4D8" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Sec 17 Plaza ➔ Sec 22 Market
+                  </span>
+                  <span class="preview-value" style="color: var(--accent);">Safety 96% (A+)</span>
+                </div>
+                <div class="preview-bar-bg">
+                  <div class="preview-bar-fill" style="width: 96%;"></div>
+                </div>
+                <div class="preview-row" style="margin-top: 4px;">
+                  <span class="preview-label">Nearest Pink Booth</span>
+                  <span class="preview-value" style="color: var(--text-white);">Sector 17 (320m away)</span>
+                </div>
+              </div>
+
+              <ul class="feature-check-list" aria-label="Citizen App Features">
+                <li class="feature-check-item">
+                  <span class="check-icon">✓</span>
+                  <span><strong>SafePath Routing:</strong> Multi-factor safety weighting across street lighting, crowd density & Pink Booths.</span>
+                </li>
+                <li class="feature-check-item">
+                  <span class="check-icon">✓</span>
+                  <span><strong>Nirbhaya Shield:</strong> 1-tap discrete SOS, siren acoustic deterrent & realistic fake call generator.</span>
+                </li>
+                <li class="feature-check-item">
+                  <span class="check-icon">✓</span>
+                  <span><strong>Civic Reporting:</strong> Instant geotagged tickets for broken streetlamps, open garbage & waterlogging.</span>
+                </li>
+              </ul>
+            </div>
+
+            <a href="citizen.html" class="launch-btn" id="btn-launch-citizen" aria-label="Launch Citizen Mobile App">
+              <span>Launch Citizen App</span>
+              <span class="btn-arrow" aria-hidden="true">→</span>
+            </a>
+          </article>
+
+          <!-- RIGHT CARD: COMMAND CENTRE (ICCC) -->
+          <article class="launch-card admin-card" id="card-iccc">
+            <div class="card-aura" aria-hidden="true"></div>
+            <div>
+              <div class="card-top-meta">
+                <span class="card-badge">Municipal & Police HQ</span>
+                <span class="card-device-pill">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                  </svg>
+                  Desktop Command Console
+                </span>
+              </div>
+
+              <div class="card-title-group">
+                <h2 class="card-main-title">
+                  <span class="card-icon-emoji" aria-hidden="true">🖥️</span>
+                  Command Centre (ICCC)
+                </h2>
+                <div class="card-desc-highlight">
+                  3D Digital Twin, Incident Management, Green Corridor Control
+                </div>
+              </div>
+
+              <p class="card-desc-body">
+                Centralized multi-departmental nexus synthesizing real-time telemetry from all 56 sectors. Direct emergency 
+                preemption on arterial corridors and telemetric municipal fleet dispatch.
+              </p>
+
+              <!-- Interactive Live Preview Simulation -->
+              <div class="preview-box">
+                <div class="preview-row">
+                  <span class="preview-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#06D6A0" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+                    Madhya Marg Corridor Status
+                  </span>
+                  <span class="preview-value" style="color: var(--accent);">GREEN PREEMPTION READY</span>
+                </div>
+                <div class="preview-bar-bg">
+                  <div class="preview-bar-fill" style="width: 82%; background: linear-gradient(90deg, #059669, #06D6A0);"></div>
+                </div>
+                <div class="preview-row" style="margin-top: 4px;">
+                  <span class="preview-label">PGIMER Emergency Spurt</span>
+                  <span class="preview-value" style="color: var(--text-white);">Signals 14/14 Sync</span>
+                </div>
+              </div>
+
+              <ul class="feature-check-list" aria-label="Command Centre Features">
+                <li class="feature-check-item">
+                  <span class="check-icon">✓</span>
+                  <span><strong>3D Digital Twin:</strong> WebGL Three.js interactive spatial matrix of Chandigarh's sector grid.</span>
+                </li>
+                <li class="feature-check-item">
+                  <span class="check-icon">✓</span>
+                  <span><strong>Green Corridor Preemption:</strong> Emergency ambulance wave clearing Madhya Marg to PGIMER & GMCH-32.</span>
+                </li>
+                <li class="feature-check-item">
+                  <span class="check-icon">✓</span>
+                  <span><strong>IoT Smart Waste Hub:</strong> Real-time fill level telemetry and dynamic heuristic compactor routing.</span>
+                </li>
+              </ul>
+            </div>
+
+            <a href="dashboard.html" class="launch-btn admin-btn" id="btn-launch-dashboard" aria-label="Launch ICCC Command Dashboard">
+              <span>Launch Dashboard</span>
+              <span class="btn-arrow" aria-hidden="true">→</span>
+            </a>
+          </article>
+
+          <!-- THIRD CARD: 3D DIGITAL TWIN -->
+          <article class="launch-card twin-card" id="card-twin">
+            <div class="card-aura" style="background: radial-gradient(circle, rgba(168, 85, 247, 0.25) 0%, transparent 70%);" aria-hidden="true"></div>
+            <div>
+              <div class="card-top-meta">
+                <span class="card-badge" style="background: rgba(168, 85, 247, 0.15); color: #C084FC; border-color: rgba(168, 85, 247, 0.4);">3D Spatial WebGL</span>
+                <span class="card-device-pill" style="color: #C084FC;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
+                  </svg>
+                  Three.js 3D Viewport
+                </span>
+              </div>
+
+              <div class="card-title-group">
+                <h2 class="card-main-title">
+                  <span class="card-icon-emoji" aria-hidden="true">🏙️</span>
+                  3D Digital Twin
+                </h2>
+                <div class="card-desc-highlight" style="color: #C084FC;">
+                  Le Corbusier Landmarks, CCTV Cones & Blind Spots
+                </div>
+              </div>
+
+              <p class="card-desc-body">
+                Full-scale 3D spatial twin of Chandigarh featuring the Open Hand Monument, PGIMER Medical Center, Sector 17 Plaza, volumetric CCTV cones, AI blind spot detection, and live emergency green wave cascade.
+              </p>
+
+              <!-- Interactive Live Preview Simulation -->
+              <div class="preview-box" style="border-color: rgba(168, 85, 247, 0.3);">
+                <div class="preview-row">
+                  <span class="preview-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C084FC" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+                    Spatial Mesh Resolution
+                  </span>
+                  <span class="preview-value" style="color: #C084FC;">60 FPS WebGL HD</span>
+                </div>
+                <div class="preview-bar-bg">
+                  <div class="preview-bar-fill" style="width: 100%; background: linear-gradient(90deg, #9D4EDD, #00F0FF);"></div>
+                </div>
+                <div class="preview-row" style="margin-top: 4px;">
+                  <span class="preview-label">Interactive Raycasting</span>
+                  <span class="preview-value" style="color: var(--text-white);">Active Click Inspection</span>
+                </div>
+              </div>
+
+              <ul class="feature-check-list" aria-label="3D Digital Twin Features">
+                <li class="feature-check-item">
+                  <span class="check-icon" style="color: #C084FC; background: rgba(168, 85, 247, 0.15);">✓</span>
+                  <span><strong>Heritage 3D Landmarks:</strong> The Open Hand Monument, PGIMER emergency towers & Sector 17 Plaza.</span>
+                </li>
+                <li class="feature-check-item">
+                  <span class="check-icon" style="color: #C084FC; background: rgba(168, 85, 247, 0.15);">✓</span>
+                  <span><strong>Volumetric Cones & Blind Spots:</strong> Semi-transparent CCTV cones and highlighted dark hazard zones.</span>
+                </li>
+                <li class="feature-check-item">
+                  <span class="check-icon" style="color: #C084FC; background: rgba(168, 85, 247, 0.15);">✓</span>
+                  <span><strong>Day & Cyber-Night Cycles:</strong> Emissive streetlamps, roving patrol vehicles and aerial drone patrol.</span>
+                </li>
+              </ul>
+            </div>
+
+            <a href="twin.html" class="launch-btn" id="btn-launch-twin" style="background: linear-gradient(135deg, #9D4EDD, #00B4D8); color: #fff; box-shadow: 0 4px 18px rgba(157, 78, 221, 0.45);" aria-label="Explore 3D Digital Twin">
+              <span>Explore 3D Digital Twin</span>
+              <span class="btn-arrow" aria-hidden="true">→</span>
+            </a>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- ==========================================================================
+           KEY FEATURES SECTION (6 ICON CARDS)
+           ========================================================================== -->
+      <section class="features-section" id="features" aria-labelledby="features-heading-id">
+        <div class="section-header-box">
+          <span class="section-tag">Holistic City Intelligence</span>
+          <h2 class="section-heading" id="features-heading-id">Engineered for Urban Resilience</h2>
+          <p class="section-subheading">
+            Six synergistic innovations addressing safety, mobility, waste management, and civic trust in a single unified architecture.
+          </p>
+        </div>
+
+        <div class="features-grid">
+
+          <!-- Feature 1: SafePath -->
+          <div class="feature-card">
+            <div class="feature-icon-wrapper" aria-hidden="true">🛡️</div>
+            <div class="feature-title">
+              <span>SafePath</span>
+              <span class="feature-pillar-tag tag-mobility">Mobility</span>
+            </div>
+            <p class="feature-desc">
+              AI-scored safe pedestrian routing calculating continuous multi-factor safety indices based on calibrated street lighting lux levels, active shop fronts, and proximity to verified police beat points.
+            </p>
+            <div class="feature-micro-metric">
+              <span>Metric:</span> <strong>Dynamic Safety Index (0-100)</strong>
+            </div>
+          </div>
+
+          <!-- Feature 2: Nirbhaya Shield -->
+          <div class="feature-card">
+            <div class="feature-icon-wrapper" aria-hidden="true">🚨</div>
+            <div class="feature-title">
+              <span>Nirbhaya Shield</span>
+              <span class="feature-pillar-tag tag-safety">Safety</span>
+            </div>
+            <p class="feature-desc">
+              Dedicated women's safety toolkit featuring 1-tap silent dispatch to the Sector PCR grid, high-decibel acoustic siren, discrete decoy fake call generator, and instant Pink Booth geonavigation.
+            </p>
+            <div class="feature-micro-metric">
+              <span>Latency:</span> <strong>&lt; 50ms Edge Trigger Relay</strong>
+            </div>
+          </div>
+
+          <!-- Feature 3: Digital Twin -->
+          <div class="feature-card">
+            <div class="feature-icon-wrapper" aria-hidden="true">🏙️</div>
+            <div class="feature-title">
+              <span>Digital Twin</span>
+              <span class="feature-pillar-tag tag-twin">Spatial 3D</span>
+            </div>
+            <p class="feature-desc">
+              High-performance WebGL 3D model visualizing Chandigarh’s unique sector topography, highlighting arterial routes (Madhya Marg, Jan Marg), Sukhna Lake, Capitol Complex, and live sector incident clusters.
+            </p>
+            <div class="feature-micro-metric">
+              <span>Coverage:</span> <strong>56 Standardized Sectors</strong>
+            </div>
+          </div>
+
+          <!-- Feature 4: Smart Waste -->
+          <div class="feature-card">
+            <div class="feature-icon-wrapper" aria-hidden="true">🗑️</div>
+            <div class="feature-title">
+              <span>Smart Waste</span>
+              <span class="feature-pillar-tag tag-waste">Sustainability</span>
+            </div>
+            <p class="feature-desc">
+              IoT ultrasonic bin monitoring reporting fill levels across commercial & residential zones. Heuristic routing dispatches compactor trucks only when bins exceed 80% capacity, cutting fuel by 34%.
+            </p>
+            <div class="feature-micro-metric">
+              <span>Efficiency:</span> <strong>-34% Municipal Fleet Carbon</strong>
+            </div>
+          </div>
+
+          <!-- Feature 5: Green Corridor -->
+          <div class="feature-card">
+            <div class="feature-icon-wrapper" aria-hidden="true">🚦</div>
+            <div class="feature-title">
+              <span>Green Corridor</span>
+              <span class="feature-pillar-tag tag-mobility">Mobility</span>
+            </div>
+            <p class="feature-desc">
+              Automated emergency vehicle traffic preemption system. Synchronizes signals along primary transit arteries to grant uninterrupted green waves for ambulances bound for PGIMER (Sec 12) or GMCH (Sec 32).
+            </p>
+            <div class="feature-micro-metric">
+              <span>Impact:</span> <strong>-61% Critical Transit Delay</strong>
+            </div>
+          </div>
+
+          <!-- Feature 6: Privacy First -->
+          <div class="feature-card">
+            <div class="feature-icon-wrapper" aria-hidden="true">🔒</div>
+            <div class="feature-title">
+              <span>Privacy First</span>
+              <span class="feature-pillar-tag tag-privacy">Governance</span>
+            </div>
+            <p class="feature-desc">
+              Privacy-by-Design architecture compliant with DPDP Act 2023. Video streams undergo on-device edge anonymization; zero raw facial data is stored, and citizen location tracking is strictly opt-in.
+            </p>
+            <div class="feature-micro-metric">
+              <span>Compliance:</span> <strong>DPDP Act 2023 & Zero-PII</strong>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==========================================================================
+           CHANDIGARH CONTEXT & SECTORS SHOWCASE
+           ========================================================================== -->
+      <section class="context-section" id="context" aria-label="Chandigarh City Context">
+        <div class="context-grid">
+          <div class="context-content">
+            <span class="section-tag">Urban Anatomy</span>
+            <h3>Tailored for the City Beautiful's Grid Architecture</h3>
+            <p>
+              Designed by Le Corbusier, Chandigarh’s 800m × 1200m sectors and hierarchical 7Vs road network create the ultimate 
+              topological canvas for mesh coordination. Urban Mesh leverages this deterministic geometry to calculate optimal 
+              safety routing and emergency wave propagation with sub-second determinism.
+            </p>
+
+            <div class="sector-badge-cloud" aria-label="Key Landmarks in Prototype">
+              <span class="sector-badge special">🏥 PGIMER (Sec 12)</span>
+              <span class="sector-badge special">🏥 GMCH (Sec 32)</span>
+              <span class="sector-badge special">🌸 Rose Garden (Sec 16)</span>
+              <span class="sector-badge special">🏛️ Sector 17 Plaza</span>
+              <span class="sector-badge">🌊 Sukhna Lake</span>
+              <span class="sector-badge">🎓 PU Campus (Sec 14)</span>
+              <span class="sector-badge">🚌 ISBT-43 Terminal</span>
+              <span class="sector-badge">🛍️ Sector 22 Market</span>
+              <span class="sector-badge">🚨 5 Active Pink Booths</span>
+            </div>
+
+            <p style="font-size: 0.85rem; color: var(--text-subtle);">
+              Major Arteries Simulated: <strong>Madhya Marg</strong> (East-West spine), <strong>Dakshin Marg</strong>, <strong>Jan Marg</strong>, and <strong>Himalaya Marg</strong>.
+            </p>
+          </div>
+
+          <!-- Interactive Sector Schematic Box -->
+          <div class="interactive-grid-box" id="sector-interactive-box">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">
+                  Chandigarh Sector Node Matrix
+                </span>
+                <span style="font-size: 0.7rem; color: var(--accent); font-family: monospace;" id="matrix-status">
+                  STATUS: SYNCHRONIZED
+                </span>
+              </div>
+
+              <div class="grid-schematic" id="sector-schematic">
+                <!-- 12 Key Indicative Sectors for Interactive Visual -->
+                <div class="grid-node" data-sector="1">Sec 1<br><span style="font-size:0.65rem; color:var(--text-subtle);">Rock Gdn</span></div>
+                <div class="grid-node active-pink" data-sector="17">Sec 17<br><span style="font-size:0.65rem;">Plaza [PB]</span></div>
+                <div class="grid-node active-pink" data-sector="22">Sec 22<br><span style="font-size:0.65rem;">Market [PB]</span></div>
+                <div class="grid-node active-hosp" data-sector="12">Sec 12<br><span style="font-size:0.65rem;">PGIMER</span></div>
+
+                <div class="grid-node" data-sector="16">Sec 16<br><span style="font-size:0.65rem; color:var(--text-subtle);">Rose Gdn</span></div>
+                <div class="grid-node" data-sector="14">Sec 14<br><span style="font-size:0.65rem; color:var(--text-subtle);">PU Campus</span></div>
+                <div class="grid-node active-pink" data-sector="35">Sec 35<br><span style="font-size:0.65rem;">Market [PB]</span></div>
+                <div class="grid-node active-hosp" data-sector="32">Sec 32<br><span style="font-size:0.65rem;">GMCH-32</span></div>
+
+                <div class="grid-node" data-sector="7">Sec 7<br><span style="font-size:0.65rem; color:var(--text-subtle);">Residential</span></div>
+                <div class="grid-node" data-sector="26">Sec 26<br><span style="font-size:0.65rem; color:var(--text-subtle);">Grain Mkt</span></div>
+                <div class="grid-node active-pink" data-sector="43">Sec 43<br><span style="font-size:0.65rem;">ISBT-43 [PB]</span></div>
+                <div class="grid-node" data-sector="34">Sec 34<br><span style="font-size:0.65rem; color:var(--text-subtle);">Sub-City Ctr</span></div>
+              </div>
+            </div>
+
+            <div class="grid-legend">
+              <div class="legend-item">
+                <span class="legend-dot" style="background: var(--alert);"></span>
+                <span>Pink Police Booth [PB]</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot" style="background: var(--accent);"></span>
+                <span>Apex Hospital</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot" style="background: var(--primary);"></span>
+                <span>Arterial Node</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================================================
+           TECHNOLOGY STACK BADGES
+           ========================================================================== -->
+      <section class="tech-section" id="tech" aria-labelledby="tech-heading-id">
+        <span class="section-tag">Engineering Foundation</span>
+        <h2 class="section-heading" id="tech-heading-id" style="font-size: 1.8rem; margin-bottom: 24px;">
+          Built With Modern Web Standards
+        </h2>
+
+        <div class="tech-badges-container">
+          <div class="tech-badge">
+            <span class="tech-dot" style="background: #E34F26;"></span>
+            <span>HTML5 (Semantic & Accessible)</span>
+          </div>
+          <div class="tech-badge">
+            <span class="tech-dot" style="background: #1572B6;"></span>
+            <span>CSS3 (Grid, Flexbox, Keyframes)</span>
+          </div>
+          <div class="tech-badge">
+            <span class="tech-dot" style="background: #F7DF1E;"></span>
+            <span>JavaScript (ES2022+ Event Bus)</span>
+          </div>
+          <div class="tech-badge">
+            <span class="tech-dot" style="background: #000000; border: 1px solid #fff;"></span>
+            <span>Three.js (WebGL 3D Digital Twin)</span>
+          </div>
+          <div class="tech-badge">
+            <span class="tech-dot" style="background: #FF6384;"></span>
+            <span>Chart.js (Real-Time Telemetry)</span>
+          </div>
+          <div class="tech-badge">
+            <span class="tech-dot" style="background: #00B4D8;"></span>
+            <span>HTML5 Canvas API (Mesh Physics)</span>
+          </div>
+          <div class="tech-badge">
+            <span class="tech-dot" style="background: #06D6A0;"></span>
+            <span>Web Audio API (Emergency Siren)</span>
+          </div>
+          <div class="tech-badge">
+            <span class="tech-dot" style="background: #FFD166;"></span>
+            <span>W3C Geolocation Telemetry</span>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ==========================================================================
+         FOOTER & DISCLAIMER
+         ========================================================================== -->
+    <footer class="site-footer" role="contentinfo">
+      <div class="disclaimer-banner">
+        <div class="disclaimer-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          Academic Prototype Notice
+        </div>
+        <p class="disclaimer-text">
+          Academic Prototype — Code Yudh Hackathon — Chandigarh University | All data is simulated | No real systems connected.
+          Sensor telematics, CCTV feeds, GPS routes, and emergency dispatch messages are generated locally for architectural evaluation.
+        </p>
+      </div>
+
+      <div class="footer-bottom">
+        <ul class="footer-links">
+          <li><a href="citizen.html" class="footer-link">Citizen App</a></li>
+          <li><a href="dashboard.html" class="footer-link">ICCC Dashboard</a></li>
+          <li><a href="README.md" class="footer-link">Documentation (README)</a></li>
+        </ul>
+        <p>© 2026 Urban Mesh Team. Chandigarh University. Track PS-02: Smart & Sustainable Cities.</p>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ==========================================================================
+       MODAL: INTERACTIVE TOUR
+       ========================================================================== -->
+  <div class="modal-overlay" id="tour-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title-id">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-title-id">
+          <span>🚀</span> Quick Prototype Tour Guide
+        </h3>
+        <button class="close-modal-btn" id="close-modal-btn" aria-label="Close Tour Modal">✕</button>
+      </div>
+
+      <div class="tour-steps-list">
+        <div class="tour-step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Launch the Citizen Mobile App</h4>
+            <p>Click "Launch Citizen App" to test SafePath navigation, toggle night-lighting overlays, test the one-tap Nirbhaya SOS siren, and file crowdsourced civic hazard reports.</p>
+          </div>
+        </div>
+
+        <div class="tour-step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Explore the ICCC 3D Digital Twin</h4>
+            <p>Click "Launch Dashboard" to enter the Command Centre. Orbit the 3D sector model of Chandigarh in Three.js, view live sector alerts, and inspect telemetry charts.</p>
+          </div>
+        </div>
+
+        <div class="tour-step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Trigger Emergency Green Corridor</h4>
+            <p>In the ICCC Dashboard, toggle an emergency ambulance dispatch to watch the traffic signals along Madhya Marg turn dynamically green in real-time.</p>
+          </div>
+        </div>
+
+        <div class="tour-step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h4>Simulate Smart Waste Routing</h4>
+            <p>Observe IoT bin capacities across Sectors 1-56. Run the heuristic route optimizer to generate the shortest fuel-efficient garbage collection path.</p>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 12px;">
+        <button class="icon-btn" id="close-modal-action-btn" style="padding: 10px 20px; font-weight: 600;">
+          Close Guide
+        </button>
+        <a href="citizen.html" class="launch-btn" style="width: auto; padding: 10px 24px; font-size: 0.9rem;">
+          Start with Citizen App →
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       CLIENT SCRIPT: INTERACTIVE PARTICLES, AUDIO SYNTH, AND UI LOGIC
+       ========================================================================== -->
+  <script>
+    (function() {
+      'use strict';
+
+      /* ==========================================================================
+         1. INTERACTIVE BACKGROUND MESH PARTICLES (CANVAS API)
+         ========================================================================== */
+      const canvas = document.getElementById('mesh-canvas');
+      const ctx = canvas.getContext('2d');
+      let width, height;
+      let particles = [];
+      const particleCount = 65;
+      const connectionDistance = 140;
+      let mouse = { x: null, y: null, radius: 160 };
+
+      function resizeCanvas() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      }
+
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+
+      window.addEventListener('mousemove', function(e) {
+        mouse.x = e.x;
+        mouse.y = e.y;
+      });
+
+      window.addEventListener('mouseout', function() {
+        mouse.x = null;
+        mouse.y = null;
+      });
+
+      class Particle {
+        constructor() {
+          this.x = Math.random() * width;
+          this.y = Math.random() * height;
+          this.vx = (Math.random() - 0.5) * 0.7;
+          this.vy = (Math.random() - 0.5) * 0.7;
+          this.radius = Math.random() * 2 + 1.2;
+          this.baseColor = Math.random() > 0.4 ? 'rgba(0, 180, 216, ' : 'rgba(6, 214, 160, ';
+          this.alpha = Math.random() * 0.5 + 0.25;
+        }
+
+        update() {
+          this.x += this.vx;
+          this.y += this.vy;
+
+          if (this.x < 0 || this.x > width) this.vx *= -1;
+          if (this.y < 0 || this.y > height) this.vy *= -1;
+
+          // Mouse push interaction
+          if (mouse.x !== null && mouse.y !== null) {
+            const dx = mouse.x - this.x;
+            const dy = mouse.y - this.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < mouse.radius) {
+              const force = (mouse.radius - dist) / mouse.radius;
+              const angle = Math.atan2(dy, dx);
+              this.x -= Math.cos(angle) * force * 1.5;
+              this.y -= Math.sin(angle) * force * 1.5;
+            }
+          }
+        }
+
+        draw() {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+          ctx.fillStyle = this.baseColor + this.alpha + ')';
+          ctx.shadowBlur = 8;
+          ctx.shadowColor = '#00B4D8';
+          ctx.fill();
+        }
+      }
+
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle());
+      }
+
+      function animateParticles() {
+        ctx.clearRect(0, 0, width, height);
+
+        for (let i = 0; i < particles.length; i++) {
+          particles[i].update();
+          particles[i].draw();
+
+          // Connect adjacent particles with subtle mesh lines
+          for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < connectionDistance) {
+              const opacity = (1 - dist / connectionDistance) * 0.25;
+              ctx.beginPath();
+              ctx.strokeStyle = `rgba(0, 180, 216, ${opacity})`;
+              ctx.lineWidth = 0.9;
+              ctx.moveTo(particles[i].x, particles[i].y);
+              ctx.lineTo(particles[j].x, particles[j].y);
+              ctx.stroke();
+            }
+          }
+        }
+
+        requestAnimationFrame(animateParticles);
+      }
+
+      animateParticles();
+
+      /* ==========================================================================
+         2. WEB AUDIO API SYNTHESIZER (TACTILE SOUND FEEDBACK)
+         ========================================================================== */
+      let audioCtx = null;
+
+      function playUiBlip(freq = 600, type = 'sine', duration = 0.08) {
+        try {
+          if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          }
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+          gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + duration);
+        } catch (e) {
+          // Audio suppressed by browser policy if no user gesture
+        }
+      }
+
+      // Attach audio blips to buttons and links
+      document.querySelectorAll('.launch-btn, .icon-btn, .grid-node, .nav-link').forEach(elem => {
+        elem.addEventListener('mouseenter', () => playUiBlip(880, 'sine', 0.04));
+        elem.addEventListener('click', () => playUiBlip(520, 'triangle', 0.12));
+      });
+
+      /* ==========================================================================
+         3. 3D CARD TILT MICRO-INTERACTION
+         ========================================================================== */
+      const cards = document.querySelectorAll('.launch-card');
+      cards.forEach(card => {
+        card.addEventListener('mousemove', function(e) {
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+
+          const rotateX = ((y - centerY) / centerY) * -5;
+          const rotateY = ((x - centerX) / centerX) * 5;
+
+          card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-8px)`;
+        });
+
+        card.addEventListener('mouseleave', function() {
+          card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
+        });
+      });
+
+      /* ==========================================================================
+         4. SECTOR MATRIX INTERACTIVITY
+         ========================================================================== */
+      const sectorNodes = document.querySelectorAll('.grid-node');
+      const matrixStatus = document.getElementById('matrix-status');
+
+      const sectorDetails = {
+        '1': 'Sector 1 — Capitol Complex & Rock Garden (Govt Spine)',
+        '17': 'Sector 17 — Commercial Plaza & Central Pink Booth',
+        '22': 'Sector 22 — Vibrant Market & Women Safety Corridor [PB]',
+        '12': 'Sector 12 — PGIMER Hospital Emergency Trauma Hub',
+        '16': 'Sector 16 — Zakir Rose Garden & Residential Zone',
+        '14': 'Sector 14 — Panjab University Campus Pink Beat Post',
+        '35': 'Sector 35 — High-density Commercial District [PB]',
+        '32': 'Sector 32 — GMCH Apex Medical Center',
+        '7': 'Sector 7 — Key Residential Hub along Madhya Marg',
+        '26': 'Sector 26 — Grain Market & Transport Corridor',
+        '43': 'Sector 43 — ISBT Inter-State Bus Terminal [PB]',
+        '34': 'Sector 34 — Sub-City Commercial & Financial Centre'
+      };
+
+      sectorNodes.forEach(node => {
+        node.addEventListener('click', function() {
+          const sec = this.getAttribute('data-sector');
+          const info = sectorDetails[sec] || `Sector ${sec} — Active Node`;
+          if (matrixStatus) {
+            matrixStatus.textContent = info;
+            matrixStatus.style.color = '#00B4D8';
+          }
+          this.style.transform = 'scale(1.15)';
+          setTimeout(() => {
+            this.style.transform = '';
+          }, 300);
+        });
+      });
+
+      /* ==========================================================================
+         5. MODAL TOUR DIALOG CONTROLS
+         ========================================================================== */
+      const tourModal = document.getElementById('tour-modal');
+      const tourBtn = document.getElementById('tour-btn');
+      const closeModalBtn = document.getElementById('close-modal-btn');
+      const closeModalActionBtn = document.getElementById('close-modal-action-btn');
+
+      function openModal() {
+        tourModal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeModal() {
+        tourModal.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+
+      if (tourBtn) tourBtn.addEventListener('click', openModal);
+      if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+      if (closeModalActionBtn) closeModalActionBtn.addEventListener('click', closeModal);
+
+      // Close modal on background backdrop click
+      tourModal.addEventListener('click', function(e) {
+        if (e.target === tourModal) closeModal();
+      });
+
+      // Close modal on ESC key
+      window.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && tourModal.classList.contains('open')) {
+          closeModal();
+        }
+      });
+
+      /* ==========================================================================
+         6. LIVE SIMULATION TELEMETRY TICKER UPDATER
+         ========================================================================== */
+      const statSafepath = document.getElementById('stat-safepath');
+      const statBins = document.getElementById('stat-bins');
+
+      setInterval(() => {
+        if (statSafepath) {
+          const val = (98.2 + Math.random() * 0.6).toFixed(1);
+          statSafepath.textContent = val + '%';
+        }
+        if (statBins) {
+          const bins = 1480 + Math.floor(Math.random() * 8) - 4;
+          statBins.textContent = bins.toLocaleString();
+        }
+      }, 4000);
+
+      console.log('Urban Mesh Landing Page initialized successfully. Academic Prototype ready.');
+    })();
+  </script>
+
+<!-- ══════════ URBAN MESH GEMINI AI COPILOT ══════════ -->
+<style>
+  .copilot-fab {
+    position: fixed;
+    bottom: 26px;
+    right: 26px;
+    z-index: 99999;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00F0FF, #9D4EDD);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 32px rgba(0, 240, 255, 0.45), 0 0 45px rgba(157, 78, 221, 0.3);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: copilotPulse 3s infinite;
+  }
+  .copilot-fab:hover {
+    transform: scale(1.12) rotate(5deg);
+    box-shadow: 0 10px 40px rgba(0, 240, 255, 0.7), 0 0 60px rgba(157, 78, 221, 0.5);
+  }
+  .copilot-fab svg { width: 30px; height: 30px; fill: #ffffff; }
+  .copilot-badge-dot {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 14px;
+    height: 14px;
+    background: #00FF88;
+    border: 2px solid #080E24;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #00FF88;
+  }
+  @keyframes copilotPulse {
+    0%, 100% { box-shadow: 0 8px 32px rgba(0, 240, 255, 0.45), 0 0 45px rgba(157, 78, 221, 0.3); }
+    50% { box-shadow: 0 10px 42px rgba(0, 240, 255, 0.75), 0 0 65px rgba(157, 78, 221, 0.5); }
+  }
+
+  .copilot-panel {
+    position: fixed;
+    bottom: 98px;
+    right: 26px;
+    z-index: 99998;
+    width: 410px;
+    max-width: calc(100vw - 32px);
+    height: 580px;
+    max-height: calc(100vh - 120px);
+    background: rgba(8, 14, 36, 0.97);
+    border: 1px solid rgba(0, 240, 255, 0.35);
+    border-radius: 22px;
+    backdrop-filter: blur(28px);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 240, 255, 0.2);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    animation: copilotSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .copilot-panel.open { display: flex; }
+  @keyframes copilotSlideUp {
+    from { opacity: 0; transform: translateY(24px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .copilot-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(0, 240, 255, 0.18);
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.12), rgba(157, 78, 221, 0.12));
+  }
+  .copilot-header-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #00F0FF, #9D4EDD);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.4);
+  }
+  .copilot-header-info { flex: 1; min-width: 0; }
+  .copilot-header-info h3 {
+    font-size: 14px;
+    font-weight: 800;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(90deg, #FFFFFF, #00F0FF);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .copilot-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: rgba(0, 240, 255, 0.15);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    color: #00F0FF;
+    margin-top: 3px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .copilot-status-pill.live {
+    background: rgba(0, 255, 136, 0.15);
+    border-color: rgba(0, 255, 136, 0.4);
+    color: #00FF88;
+  }
+  .copilot-header-actions { display: flex; gap: 4px; }
+  .copilot-btn-icon {
+    background: none;
+    border: none;
+    color: #94A3B8;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+  .copilot-btn-icon:hover { background: rgba(255, 255, 255, 0.1); color: #FFFFFF; }
+
+  /* Settings Dropdown Panel */
+  .copilot-settings-panel {
+    display: none;
+    background: rgba(12, 20, 50, 0.98);
+    border-bottom: 1px solid rgba(0, 240, 255, 0.25);
+    padding: 14px 16px;
+    font-size: 12px;
+    color: #CBD5E1;
+    animation: fadeIn 0.25s ease;
+  }
+  .copilot-settings-panel.open { display: block; }
+  .copilot-settings-panel h4 { margin: 0 0 6px 0; color: #00F0FF; font-size: 12px; display: flex; align-items: center; gap: 6px; }
+  .copilot-settings-input-group { display: flex; gap: 6px; margin: 8px 0; }
+  .copilot-settings-input {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    border-radius: 8px;
+    padding: 6px 10px;
+    color: #FFFFFF;
+    font-size: 11px;
+    font-family: monospace;
+    outline: none;
+  }
+  .copilot-settings-input:focus { border-color: #00F0FF; }
+  .copilot-btn-save {
+    background: linear-gradient(135deg, #00F0FF, #00B4D8);
+    color: #080E24;
+    font-weight: 700;
+    font-size: 11px;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .copilot-btn-save:hover { opacity: 0.9; }
+  .copilot-settings-link { color: #00F0FF; text-decoration: underline; font-size: 10px; display: inline-block; margin-top: 2px; }
+
+  .copilot-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 240, 255, 0.3) transparent;
+  }
+  .copilot-messages::-webkit-scrollbar { width: 5px; }
+  .copilot-messages::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.3); border-radius: 4px; }
+
+  .copilot-msg {
+    padding: 11px 14px;
+    border-radius: 14px;
+    font-size: 12.5px;
+    line-height: 1.55;
+    max-width: 88%;
+    word-wrap: break-word;
+    position: relative;
+  }
+  .copilot-msg.user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, #00B4D8, #0077B6);
+    color: #FFFFFF;
+    border-bottom-right-radius: 4px;
+  }
+  .copilot-msg.ai {
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    color: #E2E8F0;
+    border-bottom-left-radius: 4px;
+  }
+  .msg-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #00F0FF;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .copilot-msg.user .msg-label { color: rgba(255, 255, 255, 0.8); }
+
+  .msg-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 10px;
+    color: #64748B;
+  }
+  .msg-source-tag {
+    color: #00F0FF;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+  }
+  .msg-speak-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    opacity: 0.65;
+    transition: opacity 0.2s;
+    padding: 2px 4px;
+  }
+  .msg-speak-btn:hover { opacity: 1; transform: scale(1.15); }
+
+  /* Interactive action button inside AI message */
+  .copilot-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(157, 78, 221, 0.2));
+    border: 1px solid #00F0FF;
+    color: #FFFFFF;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px;
+    margin-top: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .copilot-action-btn:hover {
+    background: #00F0FF;
+    color: #080E24;
+    box-shadow: 0 0 14px rgba(0, 240, 255, 0.5);
+  }
+
+  .copilot-suggestions {
+    padding: 8px 14px;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(0, 0, 0, 0.25);
+  }
+  .copilot-suggestions::-webkit-scrollbar { display: none; }
+  .copilot-chip {
+    padding: 5px 11px;
+    border-radius: 12px;
+    background: rgba(0, 240, 255, 0.08);
+    border: 1px solid rgba(0, 240, 255, 0.25);
+    color: #94A3B8;
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+  }
+  .copilot-chip:hover {
+    background: rgba(0, 240, 255, 0.22);
+    color: #00F0FF;
+    border-color: #00F0FF;
+    transform: translateY(-1px);
+  }
+
+  .copilot-input-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid rgba(0, 240, 255, 0.15);
+    background: rgba(0, 0, 0, 0.4);
+  }
+  .copilot-input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    border-radius: 12px;
+    padding: 10px 14px;
+    color: #FFFFFF;
+    font-size: 12.5px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .copilot-input:focus { border-color: #00F0FF; box-shadow: 0 0 10px rgba(0, 240, 255, 0.25); }
+  .copilot-input::placeholder { color: #64748B; font-size: 12px; }
+  .copilot-send {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #00F0FF, #9D4EDD);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 10px rgba(0, 240, 255, 0.3);
+  }
+  .copilot-send:hover { transform: scale(1.08); box-shadow: 0 4px 16px rgba(0, 240, 255, 0.5); }
+  .copilot-send svg { width: 18px; height: 18px; fill: #FFFFFF; }
+
+  .typing-dots { display: inline-flex; gap: 4px; padding: 4px 0; }
+  .typing-dots span {
+    width: 6px;
+    height: 6px;
+    background: #00F0FF;
+    border-radius: 50%;
+    animation: dotBounce 1.2s infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes dotBounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.35; }
+    30% { transform: translateY(-6px); opacity: 1; }
+  }
+
+  @media (max-width: 480px) {
+    .copilot-panel { width: calc(100vw - 20px); right: 10px; bottom: 85px; height: 520px; }
+    .copilot-fab { bottom: 18px; right: 18px; width: 54px; height: 54px; }
+  }
+</style>
+
+<!-- Floating AI Copilot Trigger -->
+<button class="copilot-fab" id="copilotFab" onclick="toggleCopilot()" aria-label="Open Urban Mesh AI Copilot">
+  <div class="copilot-badge-dot" id="copilotStatusDot" title="AI Status: Ready"></div>
+  <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+</button>
+
+<!-- Main AI Copilot Chat Window -->
+<div class="copilot-panel" id="copilotPanel">
+  <div class="copilot-header">
+    <div class="copilot-header-icon">🤖</div>
+    <div class="copilot-header-info">
+      <h3>Urban Mesh AI <span style="font-size: 10px; opacity: 0.85;">✨</span></h3>
+      <div class="copilot-status-pill" id="copilotStatusPill">
+        <span>⚡</span> <span id="copilotStatusText">Neural Engine (Active)</span>
+      </div>
+    </div>
+    <div class="copilot-header-actions">
+      <button class="copilot-btn-icon" onclick="toggleCopilotSettings()" title="Gemini API Key Settings">⚙️</button>
+      <button class="copilot-btn-icon" onclick="toggleCopilot()" title="Close chat">✕</button>
+    </div>
+  </div>
+
+  <!-- Settings Dropdown -->
+  <div class="copilot-settings-panel" id="copilotSettingsPanel">
+    <h4>🔑 Google Gemini 2.0 Flash Setup</h4>
+    <div>Connect real live Gemini AI model to your local project:</div>
+    <div class="copilot-settings-input-group">
+      <input type="password" id="geminiApiKeyInput" class="copilot-settings-input" placeholder="Paste AIzaSy... API key here">
+      <button class="copilot-btn-save" onclick="saveGeminiKey()">Save & Connect</button>
+    </div>
+    <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="copilot-settings-link">
+      👉 Get Free Google Gemini API Key (instant, no card needed)
+    </a>
+    <div id="geminiKeyStatus" style="margin-top:6px;font-size:10px;color:#94A3B8;"></div>
+  </div>
+
+  <!-- Messages Container -->
+  <div class="copilot-messages" id="copilotMessages">
+    <div class="copilot-msg ai">
+      <span class="msg-label">🤖 Urban Mesh AI</span>
+      Namaste! 🙏 I am your <strong>Urban Mesh AI Copilot</strong> — intelligent assistant for Chandigarh's Smart City Platform.<br><br>
+      Ask me anything about:<br>
+      • 🚨 <strong>Public Safety</strong> — 30s SOS Siren, Duress PIN 9999, SafePath<br>
+      • 🏙️ <strong>3D Digital Twin</strong> — Shivalik Hills, Le Corbusier Capitol Complex<br>
+      • 🍃 <strong>Urban Mobility</strong> — Emergency Green Corridors, live Chowks<br>
+      • 🌫️ <strong>Sensors & Waste</strong> — Real-time AQI, Weather & Smart IoT Bins<br><br>
+      <em>Type below or tap a quick chip to start!</em>
+      <div class="msg-footer">
+        <span class="msg-source-tag">⚡ Ready to assist</span>
+        <button class="msg-speak-btn" onclick="speakText(this)" title="Read out loud">🔊</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Suggestion Chips -->
+  <div class="copilot-suggestions" id="copilotSuggestions"></div>
+
+  <!-- Input Bar -->
+  <div class="copilot-input-bar">
+    <input class="copilot-input" id="copilotInput" type="text" placeholder="Ask Urban Mesh AI anything in English or Hindi..." onkeydown="if(event.key==='Enter')sendCopilotMessage()">
+    <button class="copilot-send" onclick="sendCopilotMessage()" title="Send message">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+(function() {
+  const pageName = document.title.toLowerCase();
+  let pageContext = 'portal';
+  if (pageName.includes('citizen') || pageName.includes('safepath')) pageContext = 'citizen';
+  else if (pageName.includes('dashboard') || pageName.includes('iccc')) pageContext = 'dashboard';
+  else if (pageName.includes('3d') || pageName.includes('twin')) pageContext = 'twin';
+
+  window._currentPageContext = pageContext;
+
+  const contextSuggestions = {
+    portal: [
+      "What can Urban Mesh do?",
+      "Show safety features",
+      "Explain 30s SOS Siren",
+      "What is Duress PIN 9999?",
+      "How does 3D Twin work?",
+      "Chandigarh me kya features hain?"
+    ],
+    citizen: [
+      "How does SafePath routing work?",
+      "🚨 Trigger SOS Siren",
+      "What is Code Black 9999?",
+      "Find nearest Pink Booth",
+      "Night safety tips",
+      "Report incident"
+    ],
+    dashboard: [
+      "Explain 9 Command Panels",
+      "Activate Green Corridor",
+      "CCTV AI Blind Spots",
+      "Live AQI & Weather status",
+      "Smart Waste compactor routes",
+      "Show PCR fleet dispatch"
+    ],
+    twin: [
+      "What am I looking at in 3D?",
+      "Show UNESCO Capitol Complex",
+      "What is Open Hand Monument?",
+      "🛰️ Toggle Satellite Aerial View",
+      "Fly to PGIMER Hospital",
+      "Matka Chowk traffic status"
+    ]
+  };
+
+  // Comprehensive Smart City Offline Knowledge Engine (50+ questions & keywords)
+  window._copilotResponses = {
+    "what can urban mesh do": "Urban Mesh is Chandigarh's next-generation Smart City Digital Twin platform tackling Problem Statement PS-02 across three core pillars:\n\n\u{1F6E1}\u{FE0F} **Public Safety**: Edge-AI CCTV coverage, SafePath night routing, 30-second dual-tone SOS siren, and silent Duress PIN (9999) coercion defense.\n\n\u{1F33F} **Urban Mobility**: Real-time emergency Green Corridors with signal preemption for ambulances & PCR vans heading to PGIMER.\n\n\u{1F5D1}\u{FE0F} **Smart Sanitation**: IoT ultrasonic smart bins with automated compactor dispatch to maintain Chandigarh's City Beautiful heritage.",
+    "show safety features": "Urban Mesh provides multi-tier safety for women and citizens:\n\n\u{1F6A8} **30s SOS Siren**: 880Hz-1450Hz warble siren with red strobe & 30-sec auto countdown.\n\u{1F510} **Duress PIN 9999**: Silences the siren to trick an attacker while secretly dispatching a Priority-1 Code Black police team!\n\u{1F6E1}\u{FE0F} **SafePath Algorithm**: Routes night pedestrians through well-lit, CCTV-monitored streets.\n\u{1F338} **Pink Booths**: 24/7 dedicated women safety kiosks with instant ICCC link.",
+    "explain 30s sos siren": "The **30-Second SOS Siren** is a psychoacoustic defense system:\n\n• Generates an aggressive dual-tone warble (880Hz \u{2194} 1450Hz sawtooth oscillator) modeled after emergency sirens.\n• Flashes a red perimeter strobe on the screen and vibrates mobile devices.\n• Automatically dispatches GPS coordinates to the ICCC Command Centre and Sector 22 PCR van.\n• Automatically shuts off after 30 seconds if disarmed via PIN (1234 genuine, 9999 covert).",
+    "duress pin 9999": "**Duress PIN (9999) — Coercion Defense System**:\n\nIf an attacker forces a victim to turn off their alarm, entering **PIN 9999** silences the siren and shows a peaceful screen ('System Disarmed') so the attacker thinks they won.\n\n\u{1F480} **In the background**: The system secretly sends a **Priority-1 CODE BLACK alert** to Chandigarh Police ICCC with live GPS tracking and dispatches the nearest interceptor van!",
+    "how does the 3d twin work": "The 3D Digital Twin is engineered with **Three.js WebGL** running at a locked **60 FPS**:\n\n• Recreates Chandigarh's authentic grid plan by Le Corbusier with V-road hierarchy (V1-V7).\n• Includes Shivalik Hills backdrop, Sukhna Lake, Leisure Valley green corridor, and UNESCO Capitol Complex.\n• Live syncs real-time temperature, wind, and PM2.5 AQI via Open-Meteo API.\n• Supports hybrid satellite aerial view via ESRI ArcGIS tiles and Google Maps overlays.",
+    "green corridor": "**Emergency Green Corridor System**:\n\nWhen an ambulance departs toward **PGIMER (Sector 12)**, ICCC overrides traffic signals along Madhya Marg & Jan Marg, creating an automated green wave corridor. This cuts emergency transit time by 48% and ensures zero signal stopping for critical patients.",
+    "capitol complex": "The **UNESCO Capitol Complex (Sector 1)** was master-planned by Swiss-French architect Le Corbusier:\n\n1. **Palace of Assembly**: Iconic building with a hyperbolic cooling tower scoop.\n2. **Secretariat**: 254-meter long administrative hub.\n3. **Open Hand Monument**: 14-meter metal sculpture rotating with the wind, symbol of peace ('open to give, open to receive').",
+    "open hand": "The **Open Hand Monument** in Sector 1 stands 14 meters high and weighs 50 tons. In our 3D Digital Twin, its 3D mesh **actually rotates in real time according to Chandigarh's live wind speed** fetched from the Open-Meteo API (30.7333°N, 76.7794°E)!",
+    "aqi": "Chandigarh's environmental telemetry is updated live every 60 seconds via Open-Meteo API. Urban Mesh tracks PM2.5, PM10, temperature, and relative humidity. In the ICCC Dashboard, air quality is visualized across all sectors with color-coded AQI severity badges.",
+    "pgimer": "**PGIMER (Post Graduate Institute of Medical Education and Research)** is located in **Sector 12**. It is Northern India's premier tertiary healthcare institution. In Urban Mesh, emergency routes prioritize Green Corridors from all sectors into PGIMER's trauma bay.",
+    "sector 17": "**Sector 17 Plaza** is the pedestrian heart and central business district of Chandigarh. Urban Mesh integrates 4 Edge-AI CCTV cameras with smart crowd-density estimation and automated dustbin level monitoring in this zone.",
+    "kya hai ye": "Urban Mesh ek complete **Smart & Sustainable City Digital Twin** platform hai jo Chandigarh ke liye banaya gaya hai. Isme 3D digital model, women safety SOS siren, silent duress PIN 9999, Green Corridor ambulance routing, aur live weather/AQI integrated hai.",
+    "siren kaise chalayein": "Aap screen par red **🚨 SOS EMERGENCY** button par click karke 30-second siren chala sakte hain! Siren ko band karne ke liye genuine PIN **1234** daalein, ya emergency coercion mein secret fake PIN **9999** daalein!",
+    "kya feature hai": "Urban Mesh mein 5 main features hain:\n1. \u{1F3D9}\u{FE0F} 3D Digital Twin (Le Corbusier authentic grid)\n2. \u{1F6A8} 30-Second Siren + Duress PIN 9999\n3. \u{1F6E1}\u{FE0F} SafePath Women Safety Routing\n4. \u{1F691} Green Corridor Emergency Signal Preemption\n5. \u{1F30D} Google Maps & ESRI Satellite integration",
+    "namaste": "Namaste! 🙏 Urban Mesh Smart City Copilot mein aapka swagat hai! Main Chandigarh platform ke sabhi features ke baare mein bata sakta hoon. Aap mujhse koi bhi sawal pooch sakte hain!"
+  };
+
+  // Render suggestion chips
+  const sugContainer = document.getElementById('copilotSuggestions');
+  const sugs = contextSuggestions[pageContext] || contextSuggestions.portal;
+  sugContainer.innerHTML = sugs.map(s => `<button class="copilot-chip" onclick="handleChipClick('${s.replace(/'/g, "\\'")}')">${s}</button>`).join('');
+
+  // Check backend Gemini status on load
+  checkGeminiBackendStatus();
+})();
+
+function toggleCopilot() {
+  const panel = document.getElementById('copilotPanel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) {
+    setTimeout(() => document.getElementById('copilotInput').focus(), 150);
+  }
+}
+
+function toggleCopilotSettings() {
+  const s = document.getElementById('copilotSettingsPanel');
+  s.classList.toggle('open');
+}
+
+async function checkGeminiBackendStatus() {
+  try {
+    const res = await fetch('/api/status');
+    const data = await res.json();
+    const pill = document.getElementById('copilotStatusPill');
+    const text = document.getElementById('copilotStatusText');
+    const dot = document.getElementById('copilotStatusDot');
+    
+    if (data.geminiConfigured) {
+      pill.className = 'copilot-status-pill live';
+      text.textContent = 'Gemini 2.0 Flash (Live)';
+      dot.style.background = '#00FF88';
+      dot.title = 'AI Status: Gemini 2.0 Flash Live';
+    } else {
+      pill.className = 'copilot-status-pill';
+      text.textContent = 'Neural Engine (Active)';
+      dot.style.background = '#00F0FF';
+      dot.title = 'AI Status: Smart City Neural Engine Active';
+    }
+  } catch (e) {
+    // Running purely local/file
+  }
+}
+
+async function saveGeminiKey() {
+  const input = document.getElementById('geminiApiKeyInput');
+  const key = (input.value || '').trim();
+  const statusEl = document.getElementById('geminiKeyStatus');
+  
+  if (!key) {
+    statusEl.innerHTML = '<span style="color:#FFAA00;">Please enter an API key.</span>';
+    return;
+  }
+
+  statusEl.innerHTML = '<span style="color:#00F0FF;">Verifying key with Gemini API...</span>';
+
+  try {
+    const res = await fetch('/api/set-key', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey: key })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      statusEl.innerHTML = '<span style="color:#00FF88;">\u{2705} ' + data.message + '</span>';
+      localStorage.setItem('urban_mesh_gemini_key', key);
+      setTimeout(() => {
+        toggleCopilotSettings();
+        checkGeminiBackendStatus();
+      }, 1200);
+    } else {
+      statusEl.innerHTML = '<span style="color:#FF4466;">\u{274C} ' + (data.error || 'Failed to verify key') + '</span>';
+    }
+  } catch (err) {
+    // If backend not supporting endpoint, store in localStorage
+    localStorage.setItem('urban_mesh_gemini_key', key);
+    statusEl.innerHTML = '<span style="color:#00FF88;">\u{2705} Key saved locally in browser!</span>';
+    setTimeout(() => {
+      toggleCopilotSettings();
+      checkGeminiBackendStatus();
+    }, 1200);
+  }
+}
+
+function handleChipClick(text) {
+  // If text is an action chip, e.g. "Trigger SOS"
+  if (text.includes('Trigger SOS')) {
+    if (typeof window.triggerSOS === 'function') window.triggerSOS();
+    else if (typeof window.triggerSirenWithStrobe === 'function') window.triggerSirenWithStrobe();
+  }
+  handleCopilotQuery(text);
+}
+
+function sendCopilotMessage() {
+  const input = document.getElementById('copilotInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  handleCopilotQuery(text);
+}
+
+function handleCopilotQuery(query) {
+  const msgContainer = document.getElementById('copilotMessages');
+
+  // Show user message
+  const userDiv = document.createElement('div');
+  userDiv.className = 'copilot-msg user';
+  userDiv.innerHTML = '<span class="msg-label">You</span>' + escapeHtml(query);
+  msgContainer.appendChild(userDiv);
+
+  // Show typing indicator
+  const typingDiv = document.createElement('div');
+  typingDiv.className = 'copilot-msg ai';
+  typingDiv.id = 'copilot-typing';
+  typingDiv.innerHTML = '<span class="msg-label">🤖 Urban Mesh AI</span><div class="typing-dots"><span></span><span></span><span></span></div>';
+  msgContainer.appendChild(typingDiv);
+  msgContainer.scrollTop = msgContainer.scrollHeight;
+
+  const pageCtx = window._currentPageContext || 'portal';
+  const localKey = localStorage.getItem('urban_mesh_gemini_key') || '';
+
+  // Execute AI query with hybrid fallback
+  (async function() {
+    let response = null;
+    let isGemini = false;
+    let sourceLabel = '⚡ Neural Engine';
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: query, pageContext: pageCtx, apiKey: localKey })
+      });
+      const data = await res.json();
+      if (data.response && !data.fallback) {
+        response = data.response;
+        isGemini = true;
+        sourceLabel = '✨ Google Gemini 2.0 Flash';
+      }
+    } catch (e) {
+      // Backend unavailable or network error, fallback gracefully
+    }
+
+    // Fallback: Use comprehensive Smart City Semantic Intelligence Engine
+    if (!response && window._copilotResponses) {
+      const cleanQ = query.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+
+      // Check intent matching
+      for (const [k, v] of Object.entries(window._copilotResponses)) {
+        if (cleanQ.includes(k) || k.includes(cleanQ)) {
+          response = v;
+          break;
+        }
+      }
+
+      // Keyword based fuzzy matching
+      if (!response) {
+        const words = cleanQ.split(' ').filter(w => w.length > 2);
+        for (const [k, v] of Object.entries(window._copilotResponses)) {
+          if (words.some(w => k.includes(w))) {
+            response = v;
+            break;
+          }
+        }
+      }
+    }
+
+    // Default intelligent response if not matched
+    if (!response) {
+      response = "Urban Mesh AI is actively monitoring Chandigarh's municipal telemetry. \n\nYou can explore:\n• **Public Safety**: 30-second SOS siren, SafePath, and Duress PIN 9999.\n• **3D Digital Twin**: Authentic Le Corbusier grid, Capitol Complex, and live Open-Meteo wind speed.\n• **Emergency Transit**: Green Corridor preemption for PGIMER Sector 12.\n\n*Tip: Click the ⚙️ icon in the header to connect your free Google Gemini API key for live web LLM answers!*";
+    }
+
+    // Remove typing indicator
+    const oldTyping = document.getElementById('copilot-typing');
+    if (oldTyping) oldTyping.remove();
+
+    // Append AI Response
+    const aiDiv = document.createElement('div');
+    aiDiv.className = 'copilot-msg ai';
+
+    // Check if query was asking about SOS to inject direct action button
+    let actionBtnHtml = '';
+    const qLower = query.toLowerCase();
+    if (qLower.includes('sos') || qLower.includes('siren') || qLower.includes('emergency')) {
+      actionBtnHtml = '<br><button class="copilot-action-btn" onclick="executeSirenFromAI()">🚨 Test SOS Siren (30s) Now</button>';
+    } else if (qLower.includes('satellite') || qLower.includes('aerial')) {
+      actionBtnHtml = '<br><button class="copilot-action-btn" onclick="executeSatelliteFromAI()">🛰️ Toggle Satellite Aerial View</button>';
+    }
+
+    aiDiv.innerHTML = `<span class="msg-label">🤖 Urban Mesh AI</span>` + 
+      formatAIResponse(response) + 
+      actionBtnHtml +
+      `<div class="msg-footer">
+        <span class="msg-source-tag">${sourceLabel}</span>
+        <button class="msg-speak-btn" onclick="speakText(this)" title="Read out loud">🔊</button>
+      </div>`;
+
+    msgContainer.appendChild(aiDiv);
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+  })();
+}
+
+function executeSirenFromAI() {
+  if (typeof window.triggerSOS === 'function') {
+    window.triggerSOS();
+  } else if (typeof window.triggerSirenWithStrobe === 'function') {
+    window.triggerSirenWithStrobe();
+  } else {
+    window.location.href = 'twin.html';
+  }
+}
+
+function executeSatelliteFromAI() {
+  const satBtn = document.getElementById('satToggleBtn') || document.querySelector('button[onclick*="toggleSatellite"]');
+  if (satBtn) satBtn.click();
+  else if (typeof window.toggleSatelliteView === 'function') window.toggleSatelliteView();
+}
+
+function speakText(btn) {
+  if (!('speechSynthesis' in window)) return;
+  const parent = btn.closest('.copilot-msg');
+  if (!parent) return;
+
+  window.speechSynthesis.cancel(); // Stop any existing speech
+
+  // Get text content without labels/footer
+  const clone = parent.cloneNode(true);
+  const label = clone.querySelector('.msg-label');
+  if (label) label.remove();
+  const footer = clone.querySelector('.msg-footer');
+  if (footer) footer.remove();
+  const btns = clone.querySelectorAll('button');
+  btns.forEach(b => b.remove());
+
+  const cleanText = clone.textContent.trim();
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.rate = 1.05;
+  utterance.pitch = 1.0;
+  
+  btn.style.transform = 'scale(1.3)';
+  utterance.onend = () => { btn.style.transform = 'scale(1)'; };
+  utterance.onerror = () => { btn.style.transform = 'scale(1)'; };
+  
+  window.speechSynthesis.speak(utterance);
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function formatAIResponse(text) {
+  return text
+    .replace(/\n/g, '<br>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>');
+}
+</script>
+<!-- ══════════ END URBAN MESH GEMINI AI COPILOT ══════════ -->
+
+</body>
+</html>

@@ -1,0 +1,5128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Urban Mesh: Smart Chandigarh Citizen App</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Chart.js for Safety Metrics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <style>
+    /* ==========================================================================
+       DESIGN SYSTEM & CSS VARIABLES
+       ========================================================================== */
+    :root {
+      --bg-app: #F8FAFC;
+      --surface-card: #FFFFFF;
+      --surface-subtle: #F1F5F9;
+      --border-color: #E2E8F0;
+      --border-focus: #00B4D8;
+      
+      --primary: #00B4D8;
+      --primary-hover: #0096B7;
+      --primary-light: #E0F7FC;
+      
+      --safe: #06D6A0;
+      --safe-light: #E6FAF4;
+      --safe-dark: #049f76;
+      
+      --alert: #FF6B6B;
+      --alert-light: #FFEAEA;
+      --alert-dark: #D94545;
+      
+      --warning: #FFD166;
+      --warning-light: #FFF8E6;
+      --warning-dark: #D4A017;
+      
+      --text-main: #1E293B;
+      --text-muted: #64748B;
+      --text-subtle: #94A3B8;
+      --text-inverted: #FFFFFF;
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --radius-pill: 9999px;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0,0,0,0.04);
+      --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.08), 0 4px 10px -2px rgba(0, 0, 0, 0.04);
+      --shadow-alert: 0 8px 25px rgba(255, 107, 107, 0.35);
+      --shadow-safe: 0 8px 25px rgba(6, 214, 160, 0.3);
+
+      --transition-default: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-spring: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0F172A; /* Outer desktop background */
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 10px;
+      overflow-x: hidden;
+    }
+
+    /* Desktop Phone Frame Mockup */
+    .phone-container {
+      width: 100%;
+      max-width: 430px;
+      height: 900px;
+      max-height: 94vh;
+      background: var(--bg-app);
+      border-radius: 44px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.5), 0 0 0 10px #1E293B, 0 0 0 12px #334155;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 0;
+        background: var(--bg-app);
+      }
+      .phone-container {
+        max-width: 100vw;
+        height: 100vh;
+        max-height: 100vh;
+        border-radius: 0;
+        box-shadow: none;
+        border: none;
+      }
+    }
+
+    /* Micro-interactions & Haptic style */
+    button, .interactive-btn {
+      transition: var(--transition-default);
+      cursor: pointer;
+      outline: none;
+      border: none;
+    }
+    button:active, .interactive-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Hardware Status Bar (iOS/Android style) */
+    .status-bar {
+      height: 44px;
+      padding: 12px 24px 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      z-index: 50;
+      background: transparent;
+      flex-shrink: 0;
+    }
+    .status-bar-icons {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-pill {
+      font-size: 11px;
+      background: #E2E8F0;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    /* Fixed Floating Emergency SOS Badge (Available on ALL tabs) */
+    .floating-panic-btn {
+      position: absolute;
+      top: 50px;
+      right: 16px;
+      z-index: 100;
+      background: linear-gradient(135deg, #FF6B6B 0%, #D94545 100%);
+      color: white;
+      padding: 7px 14px;
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-alert);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      animation: pulse-sos 2s infinite;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+    }
+    .floating-panic-btn:hover {
+      transform: translateY(-1px);
+    }
+    @keyframes pulse-sos {
+      0%, 100% {
+        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 6px 22px rgba(255, 107, 107, 0.7);
+        transform: scale(1.04);
+      }
+    }
+
+    /* Dynamic Island / Notch Mockup */
+    .dynamic-notch {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 104px;
+      height: 24px;
+      background: #0F172A;
+      border-radius: 20px;
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+    }
+    .camera-lens {
+      width: 10px;
+      height: 10px;
+      background: #1E293B;
+      border-radius: 50%;
+      border: 1px solid #334155;
+    }
+    .sensor-indicator {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #06D6A0;
+      box-shadow: 0 0 6px #06D6A0;
+    }
+
+    /* Main Scrollable View Area */
+    .main-viewport {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: relative;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 84px; /* clearance for bottom nav */
+    }
+    .main-viewport::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* View Tab Transitions */
+    .tab-view {
+      display: none;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+      padding: 16px;
+    }
+    .tab-view.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Academic Prototype Watermark Banner */
+    .prototype-banner {
+      background: #EFF6FF;
+      border: 1px dashed #93C5FD;
+      color: #1E40AF;
+      font-size: 10px;
+      font-weight: 600;
+      text-align: center;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    /* Top Navigation Header for Views */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-right: 76px; /* space for SOS badge */
+    }
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-logo-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #00B4D8 0%, #0077B6 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 900;
+      font-size: 19px;
+      box-shadow: 0 4px 10px rgba(0, 180, 216, 0.3);
+    }
+    .brand-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.1;
+      letter-spacing: -0.3px;
+    }
+    .brand-subtitle {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ==========================================================================
+       TAB 1: HOME COMPONENTS
+       ========================================================================== */
+    .user-greeting-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .user-welcome-text h2 {
+      font-size: 21px;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.4px;
+    }
+    .user-welcome-text p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .user-avatar-wrap {
+      position: relative;
+    }
+    .user-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: var(--shadow-sm);
+      object-fit: cover;
+      background: #CBD5E1;
+    }
+    .user-status-dot {
+      width: 12px;
+      height: 12px;
+      background: var(--safe);
+      border: 2px solid white;
+      border-radius: 50%;
+      position: absolute;
+      bottom: -1px;
+      right: -1px;
+    }
+
+    /* Safety Score Hero Card */
+    .safety-score-card {
+      background: linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 18px;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .safety-score-card::after {
+      content: '';
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle, rgba(6, 214, 160, 0.15) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .score-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+    .score-location-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: var(--primary-light);
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .score-body {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    /* Circular Progress */
+    .circle-progress-wrapper {
+      position: relative;
+      width: 96px;
+      height: 96px;
+      flex-shrink: 0;
+    }
+    .circle-progress-svg {
+      transform: rotate(-90deg);
+      width: 96px;
+      height: 96px;
+    }
+    .circle-progress-bg {
+      fill: none;
+      stroke: #E2E8F0;
+      stroke-width: 9;
+    }
+    .circle-progress-bar {
+      fill: none;
+      stroke: var(--safe);
+      stroke-width: 9;
+      stroke-linecap: round;
+      stroke-dasharray: 251.2;
+      stroke-dashoffset: 32.6; /* ~87% */
+      transition: stroke-dashoffset 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .circle-progress-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .circle-progress-val {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--text-main);
+      line-height: 1;
+    }
+    .circle-progress-sub {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--safe-dark);
+      text-transform: uppercase;
+    }
+    
+    .factors-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 12px;
+      flex: 1;
+    }
+    .factor-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .factor-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .factor-pct {
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .factor-bar-bg {
+      height: 5px;
+      background: #E2E8F0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 2px;
+    }
+    .factor-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: var(--safe);
+      transition: width 1s ease-out;
+    }
+
+    /* Quick Actions 2x2 Grid */
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin: 16px 0 10px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .section-title-sub {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+    .quick-actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .action-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 108px;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+      text-align: left;
+    }
+    .action-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    .action-card.sos-action {
+      background: linear-gradient(135deg, #FF6B6B 0%, #FA5252 100%);
+      color: white;
+      border: none;
+      box-shadow: 0 4px 14px rgba(255, 107, 107, 0.35);
+    }
+    .action-card.safepath-action {
+      background: linear-gradient(135deg, #00B4D8 0%, #0096B7 100%);
+      color: white;
+      border: none;
+      box-shadow: 0 4px 14px rgba(0, 180, 216, 0.3);
+    }
+    .action-card-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface-subtle);
+    }
+    .sos-action .action-card-icon,
+    .safepath-action .action-card-icon {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .action-card-label {
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .action-card-desc {
+      font-size: 10px;
+      opacity: 0.85;
+      margin-top: 3px;
+    }
+
+    /* Active Alerts Banner */
+    .alerts-ticker-wrap {
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .ticker-icon {
+      width: 28px;
+      height: 28px;
+      background: #FEF3C7;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #D97706;
+      flex-shrink: 0;
+      font-size: 15px;
+    }
+    .ticker-content {
+      flex: 1;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .ticker-track {
+      display: inline-block;
+      white-space: nowrap;
+      animation: marquee-anim 18s linear infinite;
+      font-size: 11px;
+      font-weight: 600;
+      color: #92400E;
+    }
+    .ticker-track:hover {
+      animation-play-state: paused;
+    }
+    @keyframes marquee-anim {
+      0% { transform: translate3d(0, 0, 0); }
+      100% { transform: translate3d(-50%, 0, 0); }
+    }
+
+    /* Sector 22 Highlights Card */
+    .sector-info-card {
+      background: white;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .sec-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sec-badge-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--safe);
+      box-shadow: 0 0 0 3px var(--safe-light);
+    }
+    .sec-meta h4 {
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .sec-meta p {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* ==========================================================================
+       TAB 2: MAP VIEW
+       ========================================================================== */
+    .map-screen-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      margin: -16px; /* negate tab-view padding */
+    }
+    .map-filter-bar {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      z-index: 15;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 4px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(8px);
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      box-shadow: var(--shadow-md);
+    }
+    .map-filter-bar::-webkit-scrollbar {
+      display: none;
+    }
+    .filter-pill {
+      padding: 6px 12px;
+      border-radius: var(--radius-pill);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: transparent;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: var(--transition-default);
+    }
+    .filter-pill.active {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 2px 8px rgba(0, 180, 216, 0.35);
+    }
+
+    .canvas-container {
+      width: 100%;
+      height: 570px;
+      position: relative;
+      background: #F1F5F9;
+      overflow: hidden;
+      touch-action: none;
+    }
+    #chandigarhCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+    }
+    #chandigarhCanvas:active {
+      cursor: grabbing;
+    }
+
+    /* Map Floating Controls */
+    .map-floating-controls {
+      position: absolute;
+      bottom: 20px;
+      right: 16px;
+      z-index: 15;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .map-ctrl-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: white;
+      color: var(--text-main);
+      box-shadow: var(--shadow-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: bold;
+      border: 1px solid var(--border-color);
+    }
+
+    /* Map Legend Pill */
+    .map-legend-pill {
+      position: absolute;
+      bottom: 20px;
+      left: 16px;
+      z-index: 15;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(8px);
+      padding: 6px 10px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      font-size: 10px;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      box-shadow: var(--shadow-sm);
+    }
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-swatch {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+    }
+
+    /* Map Detail Popup Modal / Bottom Sheet */
+    .map-popup-card {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-radius: 24px 24px 0 0;
+      box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.15);
+      padding: 18px 20px;
+      z-index: 25;
+      transform: translateY(110%);
+      transition: transform 0.32s cubic-bezier(0.1, 0.9, 0.2, 1);
+      border-top: 1px solid var(--border-color);
+    }
+    .map-popup-card.open {
+      transform: translateY(0);
+    }
+    .popup-drag-handle {
+      width: 36px;
+      height: 4px;
+      background: #CBD5E1;
+      border-radius: 4px;
+      margin: 0 auto 12px auto;
+    }
+    .popup-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .popup-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+    .popup-safety-tag {
+      font-size: 12px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: var(--radius-pill);
+    }
+    .popup-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .popup-stat {
+      background: var(--surface-subtle);
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+    }
+    .popup-stat-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .popup-stat-val {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-top: 2px;
+    }
+    .popup-close-btn {
+      background: #F1F5F9;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /* ==========================================================================
+       TAB 3: SAFEPATH NAVIGATION
+       ========================================================================== */
+    .safepath-search-box {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .route-input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .route-input-row:last-child {
+      margin-bottom: 0;
+    }
+    .route-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .route-dot.start {
+      background: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+    .route-dot.end {
+      background: var(--safe);
+      box-shadow: 0 0 0 3px var(--safe-light);
+    }
+    .route-connector {
+      position: absolute;
+      left: 18px;
+      top: 32px;
+      bottom: 32px;
+      width: 2px;
+      border-left: 2px dashed #CBD5E1;
+      pointer-events: none;
+    }
+    .route-input {
+      flex: 1;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border-color);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    /* Route Selection Cards */
+    .routes-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .route-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      border: 2px solid var(--border-color);
+      padding: 14px;
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      position: relative;
+      transition: var(--transition-default);
+    }
+    .route-card.selected {
+      border-color: var(--safe);
+      background: #FAFEFD;
+      box-shadow: var(--shadow-safe);
+    }
+    .route-card.route-a.selected {
+      border-color: var(--warning-dark);
+      background: #FFFDF9;
+      box-shadow: 0 4px 14px rgba(212, 160, 23, 0.2);
+    }
+    .route-badge {
+      position: absolute;
+      top: -10px;
+      right: 14px;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-safepath {
+      background: var(--safe);
+      color: white;
+      box-shadow: 0 2px 6px rgba(6, 214, 160, 0.4);
+    }
+    .badge-standard {
+      background: var(--warning-dark);
+      color: white;
+    }
+    .route-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+    }
+    .route-name {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+    .route-score-pill {
+      font-size: 12px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+    }
+    .score-green {
+      background: var(--safe-light);
+      color: var(--safe-dark);
+    }
+    .score-orange {
+      background: var(--warning-light);
+      color: #B45309;
+    }
+    .route-metrics-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .route-metrics-row span b {
+      color: var(--text-main);
+    }
+    .route-feature-list {
+      font-size: 11px;
+      line-height: 1.5;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .route-feature-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Mini Map Canvas for SafePath */
+    .safepath-mini-map-wrap {
+      width: 100%;
+      height: 160px;
+      background: #F1F5F9;
+      border-radius: var(--radius-md);
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+    #miniRouteCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Comparison Table */
+    .comparison-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      padding: 14px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .comparison-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .comp-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    .comp-table th {
+      text-align: left;
+      padding: 6px 4px;
+      color: var(--text-muted);
+      font-weight: 700;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .comp-table td {
+      padding: 8px 4px;
+      border-bottom: 1px solid #F1F5F9;
+    }
+    .comp-table tr:last-child td {
+      border-bottom: none;
+    }
+    .comp-factor-name {
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .comp-val-a {
+      color: #D97706;
+      font-weight: 600;
+    }
+    .comp-val-b {
+      color: var(--safe-dark);
+      font-weight: 700;
+    }
+
+    .start-nav-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #06D6A0 0%, #049f76 100%);
+      color: white;
+      padding: 14px;
+      border-radius: var(--radius-lg);
+      font-size: 14px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: var(--shadow-safe);
+    }
+
+    /* Active Navigation Simulation Overlay */
+    .active-nav-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #0A0E27;
+      color: white;
+      z-index: 120;
+      display: none;
+      flex-direction: column;
+      padding: 24px 20px;
+      animation: fadeIn 0.3s ease;
+    }
+    .active-nav-overlay.visible {
+      display: flex;
+    }
+    .nav-instruction-banner {
+      background: #111B3C;
+      border: 1px solid #1E2A4A;
+      border-radius: var(--radius-xl);
+      padding: 16px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .nav-turn-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--safe);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      color: #0A0E27;
+      flex-shrink: 0;
+    }
+    .nav-instruction-text h3 {
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    .nav-instruction-text p {
+      font-size: 12px;
+      color: #94A3B8;
+      margin-top: 4px;
+    }
+    .nav-live-mesh-card {
+      background: rgba(17, 27, 60, 0.7);
+      border: 1px solid #1E2A4A;
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      margin-bottom: auto;
+    }
+    .mesh-live-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--safe);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .mesh-pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--safe);
+      box-shadow: 0 0 10px var(--safe);
+    }
+    .nav-stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .nav-stat-box {
+      background: #111B3C;
+      border-radius: var(--radius-md);
+      padding: 10px;
+      border: 1px solid #1E2A4A;
+    }
+    .nav-stat-val {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--safe);
+    }
+    .nav-stat-lbl {
+      font-size: 10px;
+      color: #94A3B8;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .nav-end-btn {
+      background: #FF6B6B;
+      color: white;
+      padding: 14px;
+      border-radius: var(--radius-lg);
+      font-weight: 800;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    /* ==========================================================================
+       TAB 4: WOMEN'S SAFETY TOOLKIT (4 CARDS)
+       ========================================================================== */
+    .safety-toolkit-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Generic Toolkit Card Style */
+    .toolkit-card {
+      background: white;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-color);
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .card-header-with-badge {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .card-title-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-icon-pill {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .card-title-text {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+    .card-subtitle-text {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* 4A: Escort Walk Timer */
+    .escort-select-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .select-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      display: block;
+    }
+    .custom-select {
+      width: 100%;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border-color);
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+      outline: none;
+    }
+    .escort-timer-display {
+      text-align: center;
+      padding: 14px;
+      background: var(--surface-subtle);
+      border-radius: var(--radius-lg);
+      margin-bottom: 12px;
+    }
+    .timer-clock {
+      font-size: 36px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-main);
+      letter-spacing: -1px;
+    }
+    .timer-status-msg {
+      font-size: 11px;
+      color: var(--safe-dark);
+      font-weight: 700;
+      margin-top: 4px;
+    }
+    .escort-actions-row {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-escort-start {
+      flex: 1;
+      background: var(--primary);
+      color: white;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .btn-escort-test {
+      background: #F1F5F9;
+      color: var(--text-main);
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid var(--border-color);
+    }
+
+    /* 4B: Duress PIN */
+    .duress-pin-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 10px 0;
+    }
+    .pin-box {
+      width: 44px;
+      height: 48px;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      text-align: center;
+      font-size: 20px;
+      font-weight: 800;
+      background: var(--surface-subtle);
+      color: var(--text-main);
+    }
+    .pin-box:focus {
+      border-color: var(--primary);
+      background: white;
+    }
+
+    /* 4C: I'm Safe Check-in */
+    .safe-checkin-btn-wrap {
+      text-align: center;
+      margin: 12px 0;
+    }
+    .big-safe-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #06D6A0 0%, #039e75 100%);
+      color: white;
+      padding: 16px;
+      border-radius: var(--radius-xl);
+      font-size: 18px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: var(--shadow-safe);
+    }
+    .recent-checkins-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .checkin-entry {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 10px;
+      background: var(--surface-subtle);
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .checkin-entry b {
+      color: var(--text-main);
+    }
+
+    /* 4D: Emergency SOS Button (Hold to activate) */
+    .sos-hold-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 0;
+    }
+    .sos-hold-btn-wrapper {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sos-svg-ring {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 140px;
+      height: 140px;
+      transform: rotate(-90deg);
+      pointer-events: none;
+    }
+    .sos-ring-bg {
+      fill: none;
+      stroke: #FEE2E2;
+      stroke-width: 8;
+    }
+    .sos-ring-progress {
+      fill: none;
+      stroke: var(--alert);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 408.4;
+      stroke-dashoffset: 408.4;
+      transition: stroke-dashoffset 0.1s linear;
+    }
+    .sos-inner-btn {
+      width: 116px;
+      height: 116px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #FF6B6B 0%, #D94545 100%);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 25px rgba(255, 107, 107, 0.45);
+      cursor: pointer;
+      user-select: none;
+    }
+    .sos-inner-btn:active {
+      transform: scale(0.95);
+    }
+    .sos-txt-main {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+    .sos-txt-sub {
+      font-size: 9px;
+      font-weight: 800;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Full-screen Red Alert Modal (When SOS activates) */
+    .emergency-alert-modal {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #7F1D1D;
+      color: white;
+      z-index: 200;
+      display: none;
+      flex-direction: column;
+      padding: 24px 20px;
+      animation: alertFlash 1s infinite alternate;
+      overflow-y: auto;
+    }
+    .emergency-alert-modal.active {
+      display: flex;
+    }
+    @keyframes alertFlash {
+      from { background: #7F1D1D; }
+      to { background: #991B1B; }
+    }
+    .alert-beacon-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .beacon-pulse-icon {
+      font-size: 54px;
+      animation: bounce 0.8s infinite alternate;
+    }
+    @keyframes bounce {
+      from { transform: scale(0.9); }
+      to { transform: scale(1.1); }
+    }
+    .alert-header-text h1 {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+    .alert-header-text p {
+      font-size: 12px;
+      opacity: 0.9;
+      margin-top: 4px;
+    }
+    .alert-status-card {
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .alert-status-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+    .alert-status-item:last-child {
+      margin-bottom: 0;
+    }
+    .alert-check-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #06D6A0;
+      color: #0A0E27;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .alert-cancel-box {
+      margin-top: auto;
+      text-align: center;
+    }
+    .btn-alert-cancel {
+      width: 100%;
+      background: white;
+      color: #7F1D1D;
+      padding: 14px;
+      border-radius: var(--radius-lg);
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    /* Check-In Escalation Modal (Escort walk timeout) */
+    .escalation-modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(8px);
+      z-index: 180;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .escalation-modal-overlay.open {
+      display: flex;
+    }
+    .escalation-dialog {
+      background: white;
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      width: 100%;
+      max-width: 360px;
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+      animation: scaleUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes scaleUp {
+      from { transform: scale(0.85); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .escalation-progress-bar-wrap {
+      width: 100%;
+      height: 8px;
+      background: #FEE2E2;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 16px 0;
+    }
+    .escalation-progress-bar {
+      height: 100%;
+      background: var(--alert);
+      width: 100%;
+      transition: width 1s linear;
+    }
+
+    /* Split-screen Modal for Duress Test */
+    .duress-split-modal {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #0B0F19;
+      color: white;
+      z-index: 190;
+      display: none;
+      flex-direction: column;
+      padding: 16px;
+      overflow-y: auto;
+    }
+    .duress-split-modal.open {
+      display: flex;
+    }
+    .duress-split-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin: 14px 0;
+    }
+    .split-col {
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .split-col.aggressor-view {
+      background: #1E293B;
+    }
+    .split-col.iccc-view {
+      background: #7F1D1D;
+      border-color: #EF4444;
+      animation: alertFlash 1s infinite alternate;
+    }
+    .split-badge {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+
+    /* ==========================================================================
+       TAB 5: REPORT CIVIC ISSUE
+       ========================================================================== */
+    .report-categories-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .category-chip {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 10px 6px;
+      text-align: center;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      box-shadow: var(--shadow-sm);
+    }
+    .category-chip.selected {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      color: var(--primary-hover);
+    }
+    .category-chip-icon {
+      font-size: 20px;
+    }
+    .category-chip-label {
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .report-form-card {
+      background: white;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-color);
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 16px;
+    }
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .form-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+    .form-input-text, .form-textarea {
+      width: 100%;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border-color);
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+      outline: none;
+    }
+    .form-input-text:focus, .form-textarea:focus {
+      border-color: var(--primary);
+      background: white;
+    }
+    .severity-toggles {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+    .sev-pill {
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 700;
+      text-align: center;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: var(--surface-subtle);
+      color: var(--text-muted);
+    }
+    .sev-pill.active.low {
+      background: var(--safe-light);
+      border-color: var(--safe);
+      color: var(--safe-dark);
+    }
+    .sev-pill.active.medium {
+      background: var(--warning-light);
+      border-color: var(--warning-dark);
+      color: #B45309;
+    }
+    .sev-pill.active.high {
+      background: var(--alert-light);
+      border-color: var(--alert);
+      color: var(--alert-dark);
+    }
+
+    .photo-upload-placeholder {
+      border: 2px dashed #CBD5E1;
+      border-radius: var(--radius-md);
+      padding: 16px;
+      text-align: center;
+      background: #F8FAFC;
+      cursor: pointer;
+      position: relative;
+    }
+    .photo-preview-img {
+      max-width: 100%;
+      height: 110px;
+      object-fit: cover;
+      border-radius: var(--radius-sm);
+      display: none;
+    }
+
+    .btn-submit-report {
+      width: 100%;
+      background: linear-gradient(135deg, #00B4D8 0%, #0096B7 100%);
+      color: white;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(0, 180, 216, 0.3);
+    }
+
+    /* Past Reports History */
+    .recent-reports-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .past-report-card {
+      background: white;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      padding: 12px;
+      box-shadow: var(--shadow-sm);
+    }
+    .past-report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .past-report-id {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .past-report-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+    }
+    .status-resolved {
+      background: var(--safe-light);
+      color: var(--safe-dark);
+    }
+    .status-progress {
+      background: var(--warning-light);
+      color: #B45309;
+    }
+    .status-submitted {
+      background: #EFF6FF;
+      color: #1D4ED8;
+    }
+    .past-report-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+    .past-report-meta {
+      font-size: 10px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Ticket Submitted Success Card */
+    .ticket-success-card {
+      background: #ECFDF5;
+      border: 1px solid #A7F3D0;
+      border-radius: var(--radius-xl);
+      padding: 18px;
+      text-align: center;
+      margin-bottom: 16px;
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+    .ticket-success-card.visible {
+      display: block;
+    }
+    .ticket-number-display {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--safe-dark);
+      letter-spacing: 0.5px;
+      margin: 8px 0;
+    }
+
+    /* ==========================================================================
+       BOTTOM NAVIGATION BAR
+       ========================================================================== */
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 72px;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 8px 6px 8px;
+      z-index: 100;
+    }
+    .nav-tab-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 0;
+      color: var(--text-subtle);
+      background: transparent;
+      border: none;
+      position: relative;
+      transition: var(--transition-default);
+    }
+    .nav-tab-item.active {
+      color: var(--primary);
+    }
+    .nav-tab-icon {
+      font-size: 20px;
+      margin-bottom: 2px;
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .nav-tab-item.active .nav-tab-icon {
+      transform: translateY(-2px) scale(1.1);
+    }
+    .nav-tab-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+    }
+    .nav-active-indicator {
+      position: absolute;
+      top: -1px;
+      width: 20px;
+      height: 3px;
+      background: var(--primary);
+      border-radius: 2px;
+      display: none;
+    }
+    .nav-tab-item.active .nav-active-indicator {
+      display: block;
+    }
+
+    /* Toast Notification */
+    .app-toast {
+      position: absolute;
+      top: 56px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: #1E293B;
+      color: white;
+      padding: 8px 16px;
+      border-radius: var(--radius-pill);
+      font-size: 11px;
+      font-weight: 700;
+      z-index: 300;
+      box-shadow: var(--shadow-lg);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .app-toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* Utility animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  
+    /* Google Maps Fullscreen Explore Overlay */
+    .citizen-gmap-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 9999;
+      background: rgba(5, 8, 22, 0.97);
+      display: none;
+      flex-direction: column;
+    }
+    .citizen-gmap-overlay.active { display: flex; }
+    .citizen-gmap-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      background: linear-gradient(135deg, rgba(0,240,255,0.08), rgba(157,78,221,0.08));
+      border-bottom: 1px solid rgba(0,240,255,0.2);
+    }
+    .citizen-gmap-bar h3 {
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .citizen-gmap-bar button {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .citizen-gmap-bar button:hover {
+      background: rgba(0,240,255,0.2);
+      border-color: #00F0FF;
+    }
+    .citizen-gmap-frame {
+      flex: 1;
+    }
+    .citizen-gmap-frame iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .gmap-poi-chips {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 8px 18px;
+      background: rgba(0,0,0,0.3);
+    }
+    .gmap-poi-chip {
+      white-space: nowrap;
+      background: rgba(0,240,255,0.08);
+      border: 1px solid rgba(0,240,255,0.2);
+      color: #94A3B8;
+      font-size: 11px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .gmap-poi-chip:hover, .gmap-poi-chip.active {
+      background: rgba(0,240,255,0.18);
+      color: #00F0FF;
+      border-color: #00F0FF;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Mockup Phone Outer Frame -->
+  <div class="phone-container" id="phoneContainer">
+
+    <!-- Top Hardware Status Bar -->
+    <div class="status-bar">
+      <span id="statusBarClock">19:42</span>
+      <!-- Dynamic Island / Speaker Pill -->
+      <div class="dynamic-notch">
+        <div class="camera-lens"></div>
+        <div class="sensor-indicator"></div>
+      </div>
+      <div class="status-bar-icons">
+        <span class="status-pill">5G</span>
+        <!-- Cellular Signal Icon SVG -->
+        <svg width="15" height="11" viewBox="0 0 16 12" fill="currentColor">
+          <rect x="0" y="9" width="2.5" height="3" rx="0.5"/>
+          <rect x="4.5" y="6" width="2.5" height="6" rx="0.5"/>
+          <rect x="9" y="3" width="2.5" height="9" rx="0.5"/>
+          <rect x="13.5" y="0" width="2.5" height="12" rx="0.5"/>
+        </svg>
+        <!-- Battery Icon SVG -->
+        <svg width="20" height="11" viewBox="0 0 24 12" fill="currentColor">
+          <rect x="1" y="1" width="18" height="10" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <rect x="3" y="3" width="12" height="6" rx="1.5" fill="#06D6A0"/>
+          <path d="M21 4.5V7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Pinned Floating Emergency SOS Quick Trigger (Available across ALL tabs) -->
+    <div class="floating-panic-btn" id="globalFloatingSosBtn" onclick="switchToTab('tab-safety'); triggerSosCardHighlight();" title="Emergency SOS Button">
+      <span>🆘</span>
+      <span>SOS</span>
+    </div>
+
+    <!-- Scrollable Main Viewport -->
+    <main class="main-viewport" id="mainViewport" role="main">
+
+      <!-- ====================================================================
+           TAB 1: HOME VIEW
+           ==================================================================== -->
+      <section class="tab-view active" id="view-home" aria-labelledby="home-tab-title">
+        
+        <!-- Academic Prototype Disclaimer Banner -->
+        <div class="prototype-banner">
+          <span>ℹ️</span>
+          <span>SIMULATED DATA — Academic Prototype for Code Yudh Hackathon</span>
+        </div>
+
+        <!-- App Brand Header -->
+        <div style="display: flex; gap: 8px; padding: 8px 16px; background: rgba(0,0,0,0.4); border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 11px; align-items: center; justify-content: space-between;">
+      <span style="color: #94A3B8; font-weight: 600;">Urban Mesh Citizen App</span>
+      <div style="display: flex; gap: 8px;">
+        <a href="twin.html" style="color: #00F0FF; text-decoration: none; font-weight: 700; background: rgba(0,240,255,0.1); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(0,240,255,0.3);">🛰️ 3D Twin & Satellite</a>
+        <a href="dashboard.html" style="color: #9D4EDD; text-decoration: none; font-weight: 700; background: rgba(157,78,221,0.1); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(157,78,221,0.3);">🖥️ ICCC Hub</a>
+        <a href="index.html" style="color: #fff; text-decoration: none; font-weight: 700; background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 6px;">🏠 Portal</a>
+      </div>
+    </div>
+    <header class="app-header">
+          <div class="brand-group">
+            <div class="brand-logo-icon">NM</div>
+            <div>
+              <h1 class="brand-title">Urban Mesh</h1>
+              <p class="brand-subtitle">
+                <span>🛡️</span> Smart Chandigarh Citizen
+              </p>
+            </div>
+          </div>
+        </header>
+
+        <!-- User Greeting Card -->
+        <div class="user-greeting-card">
+          <div class="user-welcome-text">
+            <h2 id="greetingText">Good Evening, Priya 👋</h2>
+            <p id="subGreeting">Sector 22 • High Mesh Coverage Active</p>
+          </div>
+          <div class="user-avatar-wrap">
+            <img class="user-avatar" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'><rect width='80' height='80' fill='%23E0F2FE'/><circle cx='40' cy='32' r='18' fill='%230284C7'/><path d='M16 72 C16 54 28 46 40 46 C52 46 64 54 64 72 Z' fill='%230369A1'/></svg>" alt="Priya Sharma Avatar" />
+            <div class="user-status-dot" title="Safe & Online"></div>
+          </div>
+        </div>
+
+        <!-- Safety Score Hero Card -->
+        <article class="safety-score-card">
+          <div class="score-card-header">
+            <div>
+              <span class="score-location-tag">📍 Sector 22, Chandigarh</span>
+              <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Real-time Dynamic Area Safety Index</p>
+            </div>
+            <span style="font-size: 10px; font-weight: 700; color: var(--safe-dark); background: var(--safe-light); padding: 3px 8px; border-radius: 99px;">
+              ● SECURE ZONE
+            </span>
+          </div>
+
+          <div class="score-body">
+            <!-- Circular Progress Indicator -->
+            <div class="circle-progress-wrapper">
+              <svg class="circle-progress-svg" viewBox="0 0 100 100">
+                <circle class="circle-progress-bg" cx="50" cy="50" r="40" />
+                <circle class="circle-progress-bar" id="scoreCircleBar" cx="50" cy="50" r="40" />
+              </svg>
+              <div class="circle-progress-text">
+                <div class="circle-progress-val">87</div>
+                <div class="circle-progress-sub">/ 100</div>
+              </div>
+            </div>
+
+            <!-- Factor Breakdown Bars -->
+            <div class="factors-grid">
+              <div class="factor-item">
+                <div class="factor-title">
+                  <span>💡 Lighting</span>
+                  <span class="factor-pct">92%</span>
+                </div>
+                <div class="factor-bar-bg">
+                  <div class="factor-bar-fill" style="width: 92%;"></div>
+                </div>
+              </div>
+
+              <div class="factor-item">
+                <div class="factor-title">
+                  <span>📷 CCTV Mesh</span>
+                  <span class="factor-pct">85%</span>
+                </div>
+                <div class="factor-bar-bg">
+                  <div class="factor-bar-fill" style="width: 85%;"></div>
+                </div>
+              </div>
+
+              <div class="factor-item">
+                <div class="factor-title">
+                  <span>🚔 Police Patrol</span>
+                  <span class="factor-pct">88%</span>
+                </div>
+                <div class="factor-bar-bg">
+                  <div class="factor-bar-fill" style="width: 88%;"></div>
+                </div>
+              </div>
+
+              <div class="factor-item">
+                <div class="factor-title">
+                  <span>🚶 Human Activity</span>
+                  <span class="factor-pct">83%</span>
+                </div>
+                <div class="factor-bar-bg">
+                  <div class="factor-bar-fill" style="width: 83%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Quick Actions Grid (2x2) -->
+        <div class="section-title">
+          <span>Quick Safety Actions</span>
+          <span class="section-title-sub">Instant Access</span>
+        </div>
+
+        <div class="quick-actions-grid">
+          <!-- 1. Emergency SOS -->
+          <button class="action-card sos-action" onclick="switchToTab('tab-safety'); triggerSosCardHighlight();" aria-label="Trigger Emergency SOS">
+            <div class="action-card-icon">🆘</div>
+            <div>
+              <div class="action-card-label">Emergency SOS</div>
+              <div class="action-card-desc">Press & Hold 3s</div>
+            </div>
+          </button>
+
+          <!-- 2. SafePath Navigate -->
+          <button class="action-card safepath-action" onclick="switchToTab('tab-safepath');" aria-label="Open SafePath Navigation">
+            <div class="action-card-icon">🛡️</div>
+            <div>
+              <div class="action-card-label">SafePath Navigate</div>
+              <div class="action-card-desc">Lit & Monitored Paths</div>
+            </div>
+          </button>
+
+          <!-- 3. Escort Timer -->
+          <button class="action-card" onclick="switchToTab('tab-safety'); document.getElementById('escortCard').scrollIntoView({behavior:'smooth'});" aria-label="Start Escort Timer">
+            <div class="action-card-icon" style="color: #0284C7; background: #E0F2FE;">👮</div>
+            <div>
+              <div class="action-card-label">Escort Timer</div>
+              <div class="action-card-desc">Auto-Check In Alert</div>
+            </div>
+          </button>
+
+          <!-- 4. Report Issue -->
+          <button class="action-card" onclick="switchToTab('tab-report');" aria-label="Report Civic Issue">
+            <div class="action-card-icon" style="color: #D97706; background: #FEF3C7;">📋</div>
+            <div>
+              <div class="action-card-label">Report Issue</div>
+              <div class="action-card-desc">Light / Bin / Hazard</div>
+            </div>
+          </button>
+        </div>
+
+        <!-- Active Alerts Banner (Ticker) -->
+        <div class="alerts-ticker-wrap">
+          <div class="ticker-icon">📢</div>
+          <div class="ticker-content">
+            <div class="ticker-track">
+              ⚠️ Madhya Marg near Sec 16: Temporary streetlight maintenance work (Expected clear 21:00) &nbsp;&nbsp;•&nbsp;&nbsp; 🚔 Pink Patrol Van active around Sector 22 Shastri Market & Kiran Cinema &nbsp;&nbsp;•&nbsp;&nbsp; 💡 4 new smart poles synchronized on Jan Marg &nbsp;&nbsp;•&nbsp;&nbsp; 
+            </div>
+          </div>
+        </div>
+
+        <!-- Sector 22 Highlights Card -->
+        <div class="sector-info-card">
+          <div class="sec-badge">
+            <div class="sec-badge-dot"></div>
+            <div class="sec-meta">
+              <h4>Nearest Pink Booth: 140m</h4>
+              <p>Sector 22-B Market • Officer Pooja Kaur on duty</p>
+            </div>
+          </div>
+          <button class="interactive-btn" onclick="switchToTab('tab-map')" style="padding: 6px 12px; background: #F1F5F9; border-radius: var(--radius-pill); font-size: 11px; font-weight: 700; color: var(--primary);">
+            View Map →
+          </button>
+        </div>
+
+        <!-- Bottom Academic Watermark -->
+        <div style="text-align: center; font-size: 10px; color: var(--text-subtle); margin-top: 14px;">
+          Simulated Data — Academic Prototype for Code Yudh Hackathon
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           TAB 2: MAP VIEW (Full-featured 2D Canvas of Chandigarh)
+           ==================================================================== -->
+      <section class="tab-view" id="view-map" aria-labelledby="map-tab-title" style="padding: 0;">
+        <div class="map-screen-wrapper">
+          
+          <!-- Layer Toggles Bar -->
+          <div class="map-filter-bar" role="toolbar" aria-label="Map Layers">
+            <button class="filter-pill active" data-layer="safety" onclick="toggleMapLayer('safety', this)">
+              <span>🛡️</span> Safety
+            </button>
+            <button class="filter-pill active" data-layer="patrols" onclick="toggleMapLayer('patrols', this)">
+              <span>🚔</span> Patrols
+            </button>
+            <button class="filter-pill active" data-layer="booths" onclick="toggleMapLayer('booths', this)">
+              <span>📍</span> Pink Booths
+            </button>
+            <button class="filter-pill active" data-layer="cctv" onclick="toggleMapLayer('cctv', this)">
+              <span>📷</span> CCTV
+            </button>
+            <button class="filter-pill active" data-layer="lights" onclick="toggleMapLayer('lights', this)">
+              <span>💡</span> Streetlights
+            </button>
+            <button class="filter-pill" data-layer="waste" onclick="toggleMapLayer('waste', this)">
+              <span>🗑️</span> Waste Bins
+            </button>
+          </div>
+
+          <!-- Interactive HTML5 2D Map Canvas -->
+          <div class="canvas-container" id="canvasContainer">
+            <canvas id="chandigarhCanvas"></canvas>
+            
+            <!-- Map Zoom & Center Floating Controls -->
+            <div class="map-floating-controls">
+              <button class="map-ctrl-btn" onclick="zoomMap(1.2)" title="Zoom In">+</button>
+              <button class="map-ctrl-btn" onclick="zoomMap(0.8)" title="Zoom Out">−</button>
+              <button class="map-ctrl-btn" onclick="resetMapView()" title="Center on Me">🎯</button>
+            </div>
+
+            <!-- Legend Info Pill -->
+            <div class="map-legend-pill">
+              <div class="legend-row">
+                <span class="legend-swatch" style="background: #06D6A0;"></span>
+                <span>Safe (85-100)</span>
+              </div>
+              <div class="legend-row">
+                <span class="legend-swatch" style="background: #FFD166;"></span>
+                <span>Moderate (70-84)</span>
+              </div>
+              <div class="legend-row">
+                <span class="legend-swatch" style="background: #FF6B6B;"></span>
+                <span>Caution (&lt;70)</span>
+              </div>
+              <div class="legend-row" style="color: var(--primary); font-size: 9px; margin-top: 2px;">
+                <span>ℹ️ Tap any sector or icon</span>
+              </div>
+            </div>
+
+            <!-- Tap Detail Popup Card / Bottom Sheet -->
+            <div class="map-popup-card" id="mapPopupCard">
+              <div class="popup-drag-handle" onclick="closeMapPopup()"></div>
+              <div class="popup-header">
+                <div>
+                  <h3 class="popup-title" id="popSectorName">Sector 22 Market</h3>
+                  <p id="popSectorSub" style="font-size: 11px; color: var(--text-muted);">Commercial & Residential Grid</p>
+                </div>
+                <span class="popup-safety-tag" id="popSafetyTag" style="background: var(--safe-light); color: var(--safe-dark);">
+                  Score: 87/100
+                </span>
+              </div>
+
+              <div class="popup-meta-grid">
+                <div class="popup-stat">
+                  <div class="popup-stat-label">Pink Booth Proximity</div>
+                  <div class="popup-stat-val" id="popPinkBooth">140m (Active)</div>
+                </div>
+                <div class="popup-stat">
+                  <div class="popup-stat-label">CCTV Cameras</div>
+                  <div class="popup-stat-val" id="popCctv">18 Linked</div>
+                </div>
+                <div class="popup-stat">
+                  <div class="popup-stat-label">Smart Streetlights</div>
+                  <div class="popup-stat-val" id="popLighting">94% Functional</div>
+                </div>
+                <div class="popup-stat">
+                  <div class="popup-stat-label">PCR Van Frequency</div>
+                  <div class="popup-stat-val" id="popPatrol">Every 12 mins</div>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <button class="interactive-btn" onclick="startNavToSector()" style="flex: 1; background: var(--safe); color: white; padding: 10px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700;">
+                  Navigate Safely Here 🛡️
+                </button>
+                <button class="popup-close-btn" onclick="closeMapPopup()">✕</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           TAB 3: SAFEPATH NAVIGATION VIEW
+           ==================================================================== -->
+      <section class="tab-view" id="view-safepath" aria-labelledby="safepath-tab-title">
+        
+        <div class="prototype-banner">
+          <span>ℹ️</span>
+          <span>AI-OPTIMIZED SAFETY ROUTING — Multi-sensor Chandigarh Mesh</span>
+        </div>
+
+        <div class="section-title" style="margin-top: 0;">
+          <span>SafePath Intelligent Route</span>
+          <span class="section-title-sub">Night Navigation</span>
+        </div>
+
+        <!-- Search / Origin-Destination Box -->
+        <div class="safepath-search-box">
+          <div class="route-connector"></div>
+          <div class="route-input-row">
+            <div class="route-dot start"></div>
+            <input type="text" class="route-input" id="routeFromInput" value="Sector 22 Market, Chandigarh" readonly />
+          </div>
+          <div class="route-input-row">
+            <div class="route-dot end"></div>
+            <input type="text" class="route-input" id="routeToInput" value="PU Campus (Sector 14)" readonly />
+          </div>
+        </div>
+
+        <!-- Route Cards Container -->
+        <div class="routes-container">
+          
+          <!-- ROUTE B: SAFEPATH (RECOMMENDED) -->
+          <div class="route-card selected" id="routeCardB" onclick="selectRoute('B')">
+            <span class="route-badge badge-safepath">★ Recommended SafePath</span>
+            <div class="route-card-header">
+              <div class="route-name">Route B: SafePath Corridor</div>
+              <span class="route-score-pill score-green">Safety: 94/100</span>
+            </div>
+            <div class="route-metrics-row">
+              <span><b>3.4 km</b></span>
+              <span>•</span>
+              <span><b>11 mins</b></span>
+              <span>•</span>
+              <span style="color: var(--safe-dark); font-weight: 700;">+3 min for +32 safety pts</span>
+            </div>
+            <div class="route-feature-list">
+              <div class="route-feature-item">
+                <span>✅</span> <span>100% Fully lit smart LED corridor (Madhya &amp; Jan Marg)</span>
+              </div>
+              <div class="route-feature-item">
+                <span>✅</span> <span>12 Connected CCTV mesh points (Zero blind spots)</span>
+              </div>
+              <div class="route-feature-item">
+                <span>✅</span> <span>2 Pink Booths en-route (Sec 22 &amp; PU Gate 2)</span>
+              </div>
+              <div class="route-feature-item">
+                <span>✅</span> <span>High commercial vitality &amp; active PCR patrols (6/hr)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ROUTE A: STANDARD -->
+          <div class="route-card route-a" id="routeCardA" onclick="selectRoute('A')">
+            <span class="route-badge badge-standard">Standard / Fast</span>
+            <div class="route-card-header">
+              <div class="route-name">Route A: Shortcut Cut-through</div>
+              <span class="route-score-pill score-orange">Safety: 62/100</span>
+            </div>
+            <div class="route-metrics-row">
+              <span><b>2.8 km</b></span>
+              <span>•</span>
+              <span><b>8 mins</b></span>
+              <span>•</span>
+              <span style="color: #D97706;">Fastest (unverified lighting)</span>
+            </div>
+            <div class="route-feature-list">
+              <div class="route-feature-item">
+                <span>⚠️</span> <span>2 poorly lit stretches near Sec 23-24 boundary</span>
+              </div>
+              <div class="route-feature-item">
+                <span>⚠️</span> <span>1 CCTV coverage blind spot (800m unmonitored)</span>
+              </div>
+              <div class="route-feature-item">
+                <span>⚠️</span> <span>No Pink Police Booth within 800m</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Route Mini-Map Visualizer -->
+        <div class="safepath-mini-map-wrap">
+          <canvas id="miniRouteCanvas"></canvas>
+          <div style="position: absolute; bottom: 8px; right: 10px; font-size: 10px; background: rgba(255,255,255,0.85); padding: 2px 6px; border-radius: 4px; font-weight: 700;">
+            Green: SafePath • Orange: Standard
+          </div>
+        </div>
+
+        <!-- Factor Comparison Table -->
+        <div class="comparison-card">
+          <div class="comparison-title">
+            <span>Factor Comparison Matrix</span>
+            <span style="font-size: 10px; color: var(--text-muted);">Real-Time Sensor Audit</span>
+          </div>
+          <table class="comp-table">
+            <thead>
+              <tr>
+                <th>Safety Metric</th>
+                <th>Route A</th>
+                <th>Route B (SafePath)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="comp-factor-name">Street Lighting</td>
+                <td class="comp-val-a">45% (Intermittent)</td>
+                <td class="comp-val-b">98% (Smart LED)</td>
+              </tr>
+              <tr>
+                <td class="comp-factor-name">CCTV Coverage</td>
+                <td class="comp-val-a">30% (Blind spots)</td>
+                <td class="comp-val-b">95% (Mesh-linked)</td>
+              </tr>
+              <tr>
+                <td class="comp-factor-name">Pink Booth Proximity</td>
+                <td class="comp-val-a">&gt; 800m</td>
+                <td class="comp-val-b">&lt; 200m (2 booths)</td>
+              </tr>
+              <tr>
+                <td class="comp-factor-name">Commercial Activity</td>
+                <td class="comp-val-a">Low (Deserted)</td>
+                <td class="comp-val-b">High (Markets open)</td>
+              </tr>
+              <tr>
+                <td class="comp-factor-name">PCR Patrol Frequency</td>
+                <td class="comp-val-a">2 per hour</td>
+                <td class="comp-val-b">6 per hour</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Start SafePath Navigation Action -->
+        <button class="start-nav-btn" onclick="startNavigationSimulation()">
+          <span>🛡️</span>
+          <span>Start SafePath Navigation</span>
+        </button>
+
+      </section>
+
+      <!-- ====================================================================
+           ACTIVE NAVIGATION SIMULATION OVERLAY
+           ==================================================================== -->
+      <div class="active-nav-overlay" id="activeNavOverlay">
+        <div class="nav-instruction-banner">
+          <div class="nav-turn-icon">⮡</div>
+          <div class="nav-instruction-text">
+            <h3 id="navTurnTitle">In 250m, Turn Right onto Jan Marg</h3>
+            <p id="navTurnSub">Pink Booth on your left • Bright corridor</p>
+          </div>
+        </div>
+
+        <div class="nav-stats-grid">
+          <div class="nav-stat-box">
+            <div class="nav-stat-val" id="navTimeRemaining">11 min</div>
+            <div class="nav-stat-lbl">ETA (Safe)</div>
+          </div>
+          <div class="nav-stat-box">
+            <div class="nav-stat-val" id="navDistRemaining">3.4 km</div>
+            <div class="nav-stat-lbl">Remaining</div>
+          </div>
+          <div class="nav-stat-box">
+            <div class="nav-stat-val" style="color: #00B4D8;">94/100</div>
+            <div class="nav-stat-lbl">Live Score</div>
+          </div>
+        </div>
+
+        <div class="nav-live-mesh-card">
+          <div class="mesh-live-tag">
+            <div class="mesh-pulse-dot"></div>
+            <span>NIRBHAYA VIRTUAL ESCORT ACTIVE</span>
+          </div>
+          <p style="font-size: 11px; line-height: 1.5; color: #E2E8F0;">
+            • CCTV Mesh tracking: <b style="color: var(--safe);">Locked (Cam #22-09)</b><br>
+            • Nearest PCR Van: <b style="color: var(--safe);">PCR-04 (350m behind)</b><br>
+            • Emergency contacts receiving live location ping every 10s.
+          </p>
+          <div style="margin-top: 10px; height: 6px; background: #1E2A4A; border-radius: 3px; overflow: hidden;">
+            <div id="navLiveProgressBar" style="height: 100%; width: 15%; background: var(--safe); transition: width 1s linear;"></div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: auto;">
+          <button class="interactive-btn" onclick="triggerSosNow()" style="flex: 1; background: #D94545; color: white; padding: 14px; border-radius: var(--radius-lg); font-weight: 800; font-size: 13px;">
+            SOS ESCALATE 🚨
+          </button>
+          <button class="interactive-btn nav-end-btn" onclick="stopNavigationSimulation()" style="flex: 1; background: #334155;">
+            End Route ✓
+          </button>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           TAB 4: SAFETY (Women's Safety Toolkit)
+           ==================================================================== -->
+      <section class="tab-view" id="view-safety" aria-labelledby="safety-tab-title">
+        
+        <div class="prototype-banner">
+          <span>ℹ️</span>
+          <span>WOMEN'S SAFETY TOOLKIT — Direct ICCC Command Integration</span>
+        </div>
+
+        <div class="safety-toolkit-stack">
+
+          <!-- 4D: EMERGENCY SOS (TOP PRIORITY CARD) -->
+          <article class="toolkit-card" id="sosCard" style="border: 2px solid #FCA5A5; background: #FFFDFD;">
+            <div class="card-header-with-badge">
+              <div class="card-title-group">
+                <div class="card-icon-pill" style="background: #FEE2E2; color: #DC2626;">🆘</div>
+                <div>
+                  <h3 class="card-title-text" style="color: #B91C1C;">Emergency SOS</h3>
+                  <p class="card-subtitle-text">Instant ICCC Alert &amp; PCR Dispatch</p>
+                </div>
+              </div>
+              <span style="font-size: 10px; font-weight: 800; background: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 99px;">
+                HIGH PRIORITY
+              </span>
+            </div>
+
+            <!-- Hold interaction circle -->
+            <div class="sos-hold-center">
+              <div class="sos-hold-btn-wrapper" id="sosHoldBtnWrapper">
+                <svg class="sos-svg-ring">
+                  <circle class="sos-ring-bg" cx="70" cy="70" r="65"></circle>
+                  <circle class="sos-ring-progress" id="sosProgressRing" cx="70" cy="70" r="65"></circle>
+                </svg>
+                <div class="sos-inner-btn" id="sosHoldBtn" role="button" tabindex="0" aria-label="Press and hold 3 seconds to trigger SOS">
+                  <span class="sos-txt-main">SOS</span>
+                  <span class="sos-txt-sub">HOLD 3 SEC</span>
+                </div>
+              </div>
+              <p style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-top: 10px; text-align: center;">
+                Tap and hold for 3 seconds to activate silent alarm &amp; dispatch
+              </p>
+            </div>
+          </article>
+
+          <!-- 4A: ESCORT WALK TIMER -->
+          <article class="toolkit-card" id="escortCard">
+            <div class="card-header-with-badge">
+              <div class="card-title-group">
+                <div class="card-icon-pill" style="background: #E0F2FE; color: #0284C7;">⏱️</div>
+                <div>
+                  <h3 class="card-title-text">Escort Walk Timer</h3>
+                  <p class="card-subtitle-text">Periodic "Are you safe?" Safety Pulse</p>
+                </div>
+              </div>
+              <span id="escortBadgeStatus" style="font-size: 10px; font-weight: 700; background: #F1F5F9; color: var(--text-muted); padding: 2px 8px; border-radius: 99px;">
+                STANDBY
+              </span>
+            </div>
+
+            <div class="escort-select-grid">
+              <div>
+                <label class="select-label" for="escortDestSelect">Destination</label>
+                <select class="custom-select" id="escortDestSelect">
+                  <option value="Hostel Gate, Sector 14 PU">PU Campus Hostel (Sec 14)</option>
+                  <option value="Sector 22 Market">Sector 22 Market</option>
+                  <option value="Sector 35 Aroma Complex">Sector 35 Market</option>
+                  <option value="ISBT Sector 43">ISBT Sector 43 Terminal</option>
+                </select>
+              </div>
+              <div>
+                <label class="select-label" for="escortEtaSelect">ETA Duration</label>
+                <select class="custom-select" id="escortEtaSelect">
+                  <option value="10">10 Minutes</option>
+                  <option value="15" selected>15 Minutes</option>
+                  <option value="20">20 Minutes</option>
+                  <option value="30">30 Minutes</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="escort-timer-display">
+              <div class="timer-clock" id="escortClockDisplay">15:00</div>
+              <div class="timer-status-msg" id="escortStatusMsg">Ready to start companion timer</div>
+            </div>
+
+            <div class="escort-actions-row">
+              <button class="btn-escort-start" id="escortToggleBtn" onclick="toggleEscortWalk()">
+                Start Escort Walk 🚶
+              </button>
+              <button class="btn-escort-test" onclick="simulateCheckInPrompt()" title="Quick test for judges to see the check-in modal immediately">
+                ⚡ Test Check-in
+              </button>
+            </div>
+          </article>
+
+          <!-- 4B: DURESS PIN -->
+          <article class="toolkit-card" id="duressCard">
+            <div class="card-header-with-badge">
+              <div class="card-title-group">
+                <div class="card-icon-pill" style="background: #FEF3C7; color: #D97706;">🔒</div>
+                <div>
+                  <h3 class="card-title-text">Duress Secondary PIN</h3>
+                  <p class="card-subtitle-text">Covert alert under coercion</p>
+                </div>
+              </div>
+              <span style="font-size: 10px; font-weight: 700; background: #FEF3C7; color: #B45309; padding: 2px 8px; border-radius: 99px;">
+                COVERT TECH
+              </span>
+            </div>
+
+            <p style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">
+              If forced by an aggressor to unlock your phone, entering your secondary <b>Duress PIN</b> unlocks an innocent decoy screen while silently transmitting an emergency GPS dispatch to ICCC.
+            </p>
+
+            <div style="margin: 12px 0;">
+              <span class="select-label">Configure Duress PIN (Simulated: 9999)</span>
+              <div class="duress-pin-input-wrap">
+                <input type="password" maxlength="1" class="pin-box" value="9" readonly>
+                <input type="password" maxlength="1" class="pin-box" value="9" readonly>
+                <input type="password" maxlength="1" class="pin-box" value="9" readonly>
+                <input type="password" maxlength="1" class="pin-box" value="9" readonly>
+                <button class="interactive-btn" onclick="openDuressTestModal()" style="margin-left: 8px; background: var(--text-main); color: white; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 800;">
+                  Test Duress Mode 🔍
+                </button>
+              </div>
+            </div>
+            <div style="font-size: 10px; color: var(--text-subtle);">
+              Normal PIN: <b>1234</b> • Duress Silent Alarm PIN: <b>9999</b>
+            </div>
+          </article>
+
+          <!-- 4C: I'M SAFE CHECK-IN -->
+          <article class="toolkit-card" id="checkinCard">
+            <div class="card-header-with-badge">
+              <div class="card-title-group">
+                <div class="card-icon-pill" style="background: var(--safe-light); color: var(--safe-dark);">✓</div>
+                <div>
+                  <h3 class="card-title-text">I'm Safe Instant Check-In</h3>
+                  <p class="card-subtitle-text">One-tap reassuring timestamp</p>
+                </div>
+              </div>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-muted); font-weight: 600; cursor: pointer;">
+                <input type="checkbox" id="autoShareToggle" checked style="accent-color: var(--safe);">
+                <span>Auto-share</span>
+              </label>
+            </div>
+
+            <div class="safe-checkin-btn-wrap">
+              <button class="big-safe-btn" onclick="performSafeCheckIn()">
+                <span>✓</span>
+                <span>I'm Safe</span>
+              </button>
+            </div>
+
+            <div>
+              <span class="select-label">Recent Check-In History (Last 5)</span>
+              <div class="recent-checkins-list" id="checkinHistoryList">
+                <div class="checkin-entry">
+                  <span>Sector 22 Market Plaza</span>
+                  <b>19:40:12</b>
+                </div>
+                <div class="checkin-entry">
+                  <span>Rose Garden Path (Sec 16)</span>
+                  <b>18:15:40</b>
+                </div>
+                <div class="checkin-entry">
+                  <span>PU Gate 2, Sector 14</span>
+                  <b>16:30:22</b>
+                </div>
+              </div>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           TAB 5: REPORT CIVIC ISSUE
+           ==================================================================== -->
+      <section class="tab-view" id="view-report" aria-labelledby="report-tab-title">
+        
+        <div class="prototype-banner">
+          <span>ℹ️</span>
+          <span>CIVIC INCIDENT REPORTING — Integrated with Chandigarh Smart Grid</span>
+        </div>
+
+        <div class="section-title" style="margin-top: 0;">
+          <span>Report Safety &amp; Civic Issue</span>
+          <span class="section-title-sub">Geo-Tagged Submission</span>
+        </div>
+
+        <!-- Issue Category Chips -->
+        <div class="report-categories-grid" role="radiogroup" aria-label="Issue Categories">
+          <div class="category-chip selected" data-cat="Broken Light" onclick="selectCategory(this, '💡 Broken Light')">
+            <div class="category-chip-icon">💡</div>
+            <div class="category-chip-label">Broken Light</div>
+          </div>
+          <div class="category-chip" data-cat="Overflowing Bin" onclick="selectCategory(this, '🗑️ Overflowing Bin')">
+            <div class="category-chip-icon">🗑️</div>
+            <div class="category-chip-label">Waste Bin</div>
+          </div>
+          <div class="category-chip" data-cat="Road Hazard" onclick="selectCategory(this, '🚧 Road Hazard')">
+            <div class="category-chip-icon">🚧</div>
+            <div class="category-chip-label">Road Hazard</div>
+          </div>
+          <div class="category-chip" data-cat="Water Leak" onclick="selectCategory(this, '💧 Water Leak')">
+            <div class="category-chip-icon">💧</div>
+            <div class="category-chip-label">Water Leak</div>
+          </div>
+          <div class="category-chip" data-cat="Illegal Dumping" onclick="selectCategory(this, '🚫 Illegal Dumping')">
+            <div class="category-chip-icon">🚫</div>
+            <div class="category-chip-label">Dumping</div>
+          </div>
+          <div class="category-chip" data-cat="Dark Alley" onclick="selectCategory(this, '⚠️ Dark Stretch')">
+            <div class="category-chip-icon">⚠️</div>
+            <div class="category-chip-label">Dark Stretch</div>
+          </div>
+        </div>
+
+        <!-- Submission Success Feedback Card (Hidden initially) -->
+        <div class="ticket-success-card" id="ticketSuccessCard">
+          <div style="font-size: 32px;">🎉</div>
+          <h3 style="font-size: 16px; font-weight: 800; color: #065F46; margin-top: 4px;">Ticket Successfully Filed!</h3>
+          <p style="font-size: 11px; color: #047857;">Dispatched to Municipal Corporation &amp; Chandigarh Police</p>
+          <div class="ticket-number-display" id="generatedTicketId">CHD-2026-4821</div>
+          <div style="font-size: 11px; color: #065F46; font-weight: 600; margin-bottom: 8px;">
+            Estimated Resolution: <b>Under 4 hours (High Priority)</b>
+          </div>
+          <div style="font-size: 10px; background: white; padding: 6px; border-radius: var(--radius-sm); color: #065F46; font-weight: 700;">
+            ✓ Earned +50 Citizen Civic Safety Points
+          </div>
+        </div>
+
+        <!-- Report Form Card -->
+        <form class="report-form-card" id="reportIssueForm" onsubmit="handleReportSubmit(event)">
+          
+          <div class="form-group">
+            <label class="form-label" for="reportCategoryInput">Selected Category</label>
+            <input type="text" class="form-input-text" id="reportCategoryInput" value="💡 Broken Light" readonly>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="reportLocationInput">GPS Location (Auto-detected)</label>
+            <div style="position: relative;">
+              <input type="text" class="form-input-text" id="reportLocationInput" value="Sector 22-B, near Booth 45, Chandigarh" required>
+              <button type="button" onclick="refreshGpsLocation()" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; font-size: 14px;" title="Refresh GPS">
+                📍
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Severity Level</label>
+            <div class="severity-toggles">
+              <div class="sev-pill" data-sev="Low" onclick="selectSeverity(this, 'Low')">Low</div>
+              <div class="sev-pill" data-sev="Medium" onclick="selectSeverity(this, 'Medium')">Medium</div>
+              <div class="sev-pill active high" data-sev="High" onclick="selectSeverity(this, 'High')">High</div>
+            </div>
+            <input type="hidden" id="reportSeverityInput" value="High">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Evidence Photo</label>
+            <div class="photo-upload-placeholder" onclick="simulatePhotoUpload()">
+              <div id="uploadPlaceholderContent">
+                <span style="font-size: 26px;">📷</span>
+                <p style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-top: 4px;">
+                  Tap to Attach Camera Photo
+                </p>
+                <p style="font-size: 9px; color: var(--text-subtle);">Simulated sensor attachment</p>
+              </div>
+              <img id="uploadedPhotoPreview" class="photo-preview-img" alt="Attached photo preview" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="reportDescription">Issue Description</label>
+            <textarea class="form-textarea" id="reportDescription" rows="3" placeholder="Describe the safety hazard or civic issue in detail..." required>Street pole #22-L-04 flickering continuously since 7 PM, creating a 50-meter dark shadow near pedestrian crosswalk.</textarea>
+          </div>
+
+          <button type="submit" class="btn-submit-report" id="btnSubmitReport">
+            <span>Submit Civic Report 🚀</span>
+          </button>
+        </form>
+
+        <!-- Recent Reports Status Tracker -->
+        <div class="section-title">
+          <span>Recent Civic Reports</span>
+          <span class="section-title-sub">Status Tracker</span>
+        </div>
+
+        <div class="recent-reports-stack">
+          <!-- Report 1 -->
+          <div class="past-report-card">
+            <div class="past-report-header">
+              <span class="past-report-id">#CHD-2026-3912</span>
+              <span class="past-report-badge status-resolved">Resolved ✓</span>
+            </div>
+            <div class="past-report-title">💡 Streetlight outage on V3 Road, Sector 15</div>
+            <div class="past-report-meta">
+              <span>Submitted: Yesterday, 21:10</span>
+              <span style="color: var(--safe-dark); font-weight: 700;">Fixed in 3.2 hrs</span>
+            </div>
+          </div>
+
+          <!-- Report 2 -->
+          <div class="past-report-card">
+            <div class="past-report-header">
+              <span class="past-report-id">#CHD-2026-4105</span>
+              <span class="past-report-badge status-progress">In Progress ⚙️</span>
+            </div>
+            <div class="past-report-title">🗑️ Smart Bin Overflow at Sector 22 Shastri Market</div>
+            <div class="past-report-meta">
+              <span>Submitted: Today, 14:30</span>
+              <span>Crew Assigned (Vehicle CHD-02)</span>
+            </div>
+          </div>
+
+          <!-- Report 3 -->
+          <div class="past-report-card">
+            <div class="past-report-header">
+              <span class="past-report-id">#CHD-2026-4198</span>
+              <span class="past-report-badge status-submitted">Under Review ⏳</span>
+            </div>
+            <div class="past-report-title">🚧 Pothole Hazard near Matka Chowk (Jan Marg)</div>
+            <div class="past-report-meta">
+              <span>Submitted: Today, 17:15</span>
+              <span>Engineering Division Audit</span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- ====================================================================
+         BOTTOM NAVIGATION BAR (5 TABS)
+         ==================================================================== -->
+    <nav class="bottom-nav" role="navigation" aria-label="Bottom Navigation">
+      
+      <!-- Tab 1: Home -->
+      <button class="nav-tab-item active" id="tab-home" onclick="switchToTab('tab-home')" aria-label="Home Tab">
+        <div class="nav-active-indicator"></div>
+        <div class="nav-tab-icon">🏠</div>
+        <span class="nav-tab-label">Home</span>
+      </button>
+
+      <!-- Tab 2: Map -->
+      <button class="nav-tab-item" id="tab-map" onclick="switchToTab('tab-map')" aria-label="Map Tab">
+        <div class="nav-active-indicator"></div>
+        <div class="nav-tab-icon">🗺️</div>
+        <span class="nav-tab-label">Map</span>
+      </button>
+
+      <!-- Tab 3: SafePath -->
+      <button class="nav-tab-item" id="tab-safepath" onclick="switchToTab('tab-safepath')" aria-label="SafePath Tab">
+        <div class="nav-active-indicator"></div>
+        <div class="nav-tab-icon">🛡️</div>
+        <span class="nav-tab-label">SafePath</span>
+      </button>
+
+      <!-- Tab 4: Safety -->
+      <button class="nav-tab-item" id="tab-safety" onclick="switchToTab('tab-safety')" aria-label="Safety Toolkit Tab">
+        <div class="nav-active-indicator"></div>
+        <div class="nav-tab-icon">🆘</div>
+        <span class="nav-tab-label">Safety</span>
+      </button>
+
+      <!-- Tab 5: Report -->
+      <button class="nav-tab-item" id="tab-report" onclick="switchToTab('tab-report')" aria-label="Report Issue Tab">
+        <div class="nav-active-indicator"></div>
+        <div class="nav-tab-icon">📋</div>
+        <span class="nav-tab-label">Report</span>
+      </button>
+
+    </nav>
+
+    <!-- ====================================================================
+         MODAL 1: EMERGENCY SOS FULL-SCREEN RED ALERT MODAL
+         ==================================================================== -->
+    <div class="emergency-alert-modal" id="emergencyAlertModal" role="alertdialog" aria-modal="true" aria-label="SOS Alert Triggered">
+      
+      <!-- 30-SECOND EMERGENCY SIREN BANNER -->
+      <div id="sosSirenBanner" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(185, 28, 28, 0.35)); border: 2px solid #ef4444; border-radius: 14px; padding: 14px; margin-bottom: 16px; text-align: center; box-shadow: 0 0 25px rgba(239, 68, 68, 0.4); animation: sirenGlow 0.8s infinite alternate;">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; font-weight: 800; color: #fca5a5; letter-spacing: 0.8px;">
+          <span style="font-size: 18px; animation: bounce 0.5s infinite alternate;">🔊</span>
+          <span>HIGH-DECIBEL EMERGENCY ALARM PLAYING</span>
+        </div>
+        <div id="sosCountdownDisplay" style="font-size: 38px; font-weight: 900; color: #ffffff; font-family: 'JetBrains Mono', monospace; margin: 4px 0; text-shadow: 0 0 16px #ef4444;">
+          00:30
+        </div>
+        <div style="font-size: 11px; color: #fecaca; margin-bottom: 10px;">
+          Audible deterrence siren active • Auto-silences in <strong id="sosSecondsRemaining">30</strong> seconds
+        </div>
+        <button type="button" onclick="stopSosSirenManually()" style="background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.35); color: #fff; padding: 6px 16px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+          🔇 Mute Siren Alarm
+        </button>
+      </div>
+
+      <style>
+        @keyframes sirenGlow {
+          from { box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); border-color: #ef4444; }
+          to { box-shadow: 0 0 35px rgba(239, 68, 68, 0.75); border-color: #ff8888; }
+        }
+        @keyframes bounce {
+          from { transform: scale(1); }
+          to { transform: scale(1.3); }
+        }
+        .sos-strobe-active {
+          animation: redStrobe 0.4s infinite !important;
+        }
+        @keyframes redStrobe {
+          0%, 100% { box-shadow: inset 0 0 100px rgba(239, 68, 68, 0.6); }
+          50% { box-shadow: inset 0 0 40px rgba(239, 68, 68, 0.2); }
+        }
+      </style>
+      <div class="alert-beacon-header">
+        <div class="beacon-pulse-icon">🚨</div>
+        <div class="alert-header-text">
+          <h1>SOS ACTIVATED</h1>
+          <p>ICCC Central Emergency Grid Locked</p>
+        </div>
+      </div>
+
+      <div class="alert-status-card">
+        <div class="alert-status-item">
+          <div class="alert-check-icon">✓</div>
+          <div>
+            <b>ICCC Command Room Alerted</b>
+            <div style="font-size: 10px; opacity: 0.8;">Incident #SOS-CHD-9118 • High Priority</div>
+          </div>
+        </div>
+
+        <div class="alert-status-item">
+          <div class="alert-check-icon">✓</div>
+          <div>
+            <b>Nearest PCR Van Dispatched</b>
+            <div style="font-size: 10px; color: #86EFAC;">PCR-04 (Dist: 1.2 km • ETA: 3 min)</div>
+          </div>
+        </div>
+
+        <div class="alert-status-item">
+          <div class="alert-check-icon">✓</div>
+          <div>
+            <b>Emergency Contacts Alerted (SMS/Push)</b>
+            <div style="font-size: 10px; opacity: 0.8;">Papa (+91 98765-43210), Sneha (Roommate)</div>
+          </div>
+        </div>
+
+        <div class="alert-status-item">
+          <div class="alert-check-icon">✓</div>
+          <div>
+            <b>Real-time High Precision GPS Stream</b>
+            <div style="font-size: 10px; opacity: 0.8;">Lat: 30.7384° N, Long: 76.7725° E (Sector 22)</div>
+          </div>
+        </div>
+
+        <div class="alert-status-item">
+          <div class="alert-check-icon">✓</div>
+          <div>
+            <b>Mesh CCTV Auto-PTZ Lock</b>
+            <div style="font-size: 10px; opacity: 0.8;">Cam #22-B-08 actively recording stream</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert-cancel-box">
+        <p style="font-size: 11px; opacity: 0.9; margin-bottom: 4px;">
+          Enter 4-Digit Security Authorization PIN to Deactivate:
+        </p>
+        <p style="font-size: 10px; color: #94A3B8; margin-bottom: 10px; line-height: 1.4;">
+          Standard Disarm: <strong style="color: #60A5FA;">1234</strong> • Hostage / Attacker Coercion: <strong style="color: #F87171;">9999</strong> (Fake PIN: Silences sound immediately but secretly broadcasts Code Black Duress to 112)
+        </p>
+        <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 12px;">
+          <input type="password" id="cancelPinInput" maxlength="4" placeholder="PIN" style="width: 100px; text-align: center; font-size: 18px; border-radius: 8px; border: none; padding: 8px;">
+        </div>
+        <button class="btn-alert-cancel" onclick="cancelEmergencySos()">
+          Deactivate SOS Alert
+        </button>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         MODAL 2: ESCORT WALK "ARE YOU SAFE?" ESCALATION MODAL
+         ==================================================================== -->
+    <div class="escalation-modal-overlay" id="escalationPromptModal">
+      <div class="escalation-dialog">
+        <div style="font-size: 38px; margin-bottom: 6px;">🛡️</div>
+        <h3 style="font-size: 18px; font-weight: 800; color: var(--text-main);">Are you safe?</h3>
+        <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+          Periodic companion check-in. Please tap confirm within 60 seconds to prevent automatic emergency dispatch.
+        </p>
+        
+        <div class="escalation-progress-bar-wrap">
+          <div class="escalation-progress-bar" id="escalationTimerBar"></div>
+        </div>
+
+        <div style="font-size: 11px; font-weight: 700; color: var(--alert); margin-bottom: 14px;">
+          Auto-escalation in <span id="escalationSecondsLeft">60</span>s
+        </div>
+
+        <button class="interactive-btn" onclick="acknowledgeEscortSafety()" style="width: 100%; background: var(--safe); color: white; padding: 14px; border-radius: var(--radius-lg); font-size: 15px; font-weight: 800; margin-bottom: 8px;">
+          I'm Safe ✓
+        </button>
+
+        <button class="interactive-btn" onclick="triggerSosNow()" style="background: transparent; color: var(--alert); font-size: 11px; font-weight: 700;">
+          Need Help? Trigger SOS 🚨
+        </button>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         MODAL 3: DURESS TEST SPLIT-SCREEN COMPARISON
+         ==================================================================== -->
+    <div class="duress-split-modal" id="duressSplitModal">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <div>
+          <h2 style="font-size: 16px; font-weight: 900;">Duress PIN Demonstration</h2>
+          <p style="font-size: 10px; color: #94A3B8;">Silent Alarm Coercion Simulation</p>
+        </div>
+        <button class="interactive-btn" onclick="closeDuressModal()" style="background: #334155; color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px;">
+          Close ✕
+        </button>
+      </div>
+
+      <div class="duress-split-grid">
+        <!-- Col 1: What the aggressor sees -->
+        <div class="split-col aggressor-view">
+          <span class="split-badge" style="background: #334155; color: #94A3B8;">What Aggressor Sees</span>
+          <h4 style="font-size: 13px; font-weight: 800; margin-bottom: 4px;">Innocent Unlock Screen</h4>
+          <p style="font-size: 11px; color: #94A3B8; line-height: 1.4;">
+            Device unlocks normally without any warning banner, siren, or visual alert. Shows weather, standard notes, and innocent fake notifications.
+          </p>
+          <div style="background: #0F172A; border-radius: 8px; padding: 10px; margin-top: 10px; font-size: 11px;">
+            🌤️ Chandigarh: 24°C Sunny<br>
+            📝 Notes: "Grocery list - Milk, bread"<br>
+            💬 WhatsApp: 2 unread messages
+          </div>
+        </div>
+
+        <!-- Col 2: What ICCC receives -->
+        <div class="split-col iccc-view">
+          <span class="split-badge" style="background: #EF4444; color: white;">What ICCC Command Receives</span>
+          <h4 style="font-size: 13px; font-weight: 900; margin-bottom: 4px;">SILENT DURESS EMERGENCY</h4>
+          <p style="font-size: 11px; color: #FEE2E2; line-height: 1.4;">
+            High-priority dispatch trigger broadcasted with silent sirens:
+          </p>
+          <div style="background: rgba(0,0,0,0.4); border-radius: 8px; padding: 10px; margin-top: 10px; font-size: 10px; line-height: 1.6;">
+            🚨 <b>PRIORITY 1: DURESS PIN ACTIVATED</b><br>
+            • User: Priya Sharma (UID: CHD-77291)<br>
+            • Coercion Location: Sector 22-B (30.7384° N, 76.7725° E)<br>
+            • Covert Audio Mic Stream: <b>CONNECTED</b><br>
+            • PCR Unit 04 &amp; Pink Patrol 02 en route with SILENT RUN
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: auto; text-align: center; padding: 10px;">
+        <button class="interactive-btn" onclick="closeDuressModal()" style="background: var(--primary); color: white; padding: 10px 20px; border-radius: var(--radius-md); font-weight: 700; font-size: 12px;">
+          Return to App
+        </button>
+      </div>
+    </div>
+
+    <!-- Generic Quick Floating Toast -->
+    <div class="app-toast" id="appToast">
+      <span id="toastIcon">✓</span>
+      <span id="toastMessage">Action performed</span>
+    </div>
+
+  </div> <!-- End phone-container -->
+
+  <!-- ========================================================================
+       JAVASCRIPT LOGIC
+       ======================================================================== -->
+  <script>
+    /* ==========================================================================
+       GLOBAL STATE & CONFIGURATION
+       ========================================================================== */
+    const APP_STATE = {
+      activeTab: 'tab-home',
+      safetyScore: 87,
+      userSector: 'Sector 22',
+      userCoords: { x: 340, y: 310 }, // Relative canvas coords
+      selectedRoute: 'B',
+      isNavigating: false,
+      navDistance: 3.4,
+      navTime: 11,
+      navInterval: null,
+      escortTimerActive: false,
+      escortRemainingSec: 15 * 60,
+      escortInterval: null,
+      escalationTimeout: null,
+      escalationBarInterval: null,
+      sosHolding: false,
+      sosHoldStartTime: 0,
+      sosHoldTimer: null,
+      mapZoom: 1.0,
+      mapPan: { x: 0, y: 0 },
+      isDraggingMap: false,
+      dragStart: { x: 0, y: 0 },
+      layers: {
+        safety: true,
+        patrols: true,
+        booths: true,
+        cctv: true,
+        lights: true,
+        waste: false
+      }
+    };
+
+    /* ==========================================================================
+       CHANDIGARH SECTORS & MOCK DATA
+       ========================================================================== */
+    // Realistic grid layout of iconic Chandigarh sectors
+    const CHANDIGARH_SECTORS = [
+      // Row 1: North (Capitol / Sukhna)
+      { id: '1', name: 'Sector 1', desc: 'Capitol Complex & Rock Garden', x: 280, y: 60, w: 90, h: 60, score: 95, cctv: 24, lights: '99%', booth: 'Capitol Police Post', pcr: 'High VIP', color: '#06D6A0' },
+      { id: '2', name: 'Sector 2', desc: 'VIP Residential', x: 380, y: 60, w: 90, h: 60, score: 92, cctv: 14, lights: '96%', booth: '300m away', pcr: 'Regular', color: '#06D6A0' },
+      { id: '3', name: 'Sector 3', desc: 'War Memorial & Green', x: 480, y: 60, w: 90, h: 60, score: 90, cctv: 12, lights: '94%', booth: 'Sec 3 Station', pcr: 'Regular', color: '#06D6A0' },
+      
+      // Row 2: Central North (Madhya Marg North)
+      { id: '12', name: 'Sector 12', desc: 'PGIMER Medical Campus', x: 80, y: 135, w: 90, h: 60, score: 86, cctv: 22, lights: '92%', booth: 'Hospital Post', pcr: '24/7 Rapid', color: '#06D6A0' },
+      { id: '11', name: 'Sector 11', desc: 'Colleges & Residential', x: 180, y: 135, w: 90, h: 60, score: 78, cctv: 10, lights: '82%', booth: 'Sec 11 Station', pcr: 'Moderate', color: '#FFD166' },
+      { id: '10', name: 'Sector 10', desc: 'Art Museum & Leisure Valley', x: 280, y: 135, w: 90, h: 60, score: 84, cctv: 16, lights: '88%', booth: '400m away', pcr: 'Regular', color: '#FFD166' },
+      { id: '9', name: 'Sector 9', desc: 'UT Secretariat & Res', x: 380, y: 135, w: 90, h: 60, score: 89, cctv: 18, lights: '93%', booth: 'Sec 9 Post', pcr: 'Frequent', color: '#06D6A0' },
+      { id: '8', name: 'Sector 8', desc: 'Inner Market & Cafes', x: 480, y: 135, w: 90, h: 60, score: 88, cctv: 15, lights: '90%', booth: 'Sec 8 Post', pcr: 'Regular', color: '#06D6A0' },
+      { id: '26', name: 'Sector 26', desc: 'Grain Market & Institutes', x: 580, y: 135, w: 90, h: 60, score: 65, cctv: 8, lights: '68%', booth: 'Sec 26 PS', pcr: 'Patrol 2/hr', color: '#FF6B6B' },
+
+      // Row 3: Central Artery (Madhya Marg South to Jan Marg)
+      { id: '14', name: 'Sector 14', desc: 'Panjab University Campus', x: 80, y: 210, w: 90, h: 60, score: 92, cctv: 28, lights: '96%', booth: 'PU Pink Booth (Gate 2)', pcr: 'PU Security + PCR', color: '#06D6A0' },
+      { id: '15', name: 'Sector 15', desc: 'Student Hub & Market', x: 180, y: 210, w: 90, h: 60, score: 81, cctv: 14, lights: '84%', booth: 'Sec 15 Post', pcr: 'Regular', color: '#FFD166' },
+      { id: '16', name: 'Sector 16', desc: 'Zakir Rose Garden & Hospital', x: 280, y: 210, w: 90, h: 60, score: 91, cctv: 20, lights: '95%', booth: 'GMSH-16 Post', pcr: 'Frequent', color: '#06D6A0' },
+      { id: '17', name: 'Sector 17', desc: 'City Center Plaza (Commercial)', x: 380, y: 210, w: 90, h: 60, score: 94, cctv: 36, lights: '98%', booth: 'Sector 17 Pink Booth', pcr: 'Continuous PCR', color: '#06D6A0' },
+      { id: '18', name: 'Sector 18', desc: 'Tagore Theatre & Res', x: 480, y: 210, w: 90, h: 60, score: 83, cctv: 11, lights: '85%', booth: '500m away', pcr: 'Regular', color: '#FFD166' },
+      { id: '19', name: 'Sector 19', desc: 'Palika Bazar Hub', x: 580, y: 210, w: 90, h: 60, score: 80, cctv: 13, lights: '82%', booth: 'Sec 19 Station', pcr: 'Regular', color: '#FFD166' },
+
+      // Row 4: User Location Row (Sector 22)
+      { id: '25', name: 'Sector 25', desc: 'PU South Campus', x: 80, y: 285, w: 90, h: 60, score: 58, cctv: 6, lights: '60%', booth: 'No Booth (>1km)', pcr: 'Low Patrol', color: '#FF6B6B' },
+      { id: '24', name: 'Sector 24', desc: 'Residential & Forest cut', x: 180, y: 285, w: 90, h: 60, score: 62, cctv: 7, lights: '64%', booth: '750m away', pcr: 'Intermittent', color: '#FF6B6B' },
+      { id: '23', name: 'Sector 23', desc: 'All Weather Pool & Res', x: 280, y: 285, w: 90, h: 60, score: 79, cctv: 12, lights: '80%', booth: 'Sec 23 Post', pcr: 'Regular', color: '#FFD166' },
+      { id: '22', name: 'Sector 22', desc: 'Shastri Market & Aroma (YOU)', x: 380, y: 285, w: 90, h: 60, score: 87, cctv: 18, lights: '94%', booth: 'Sector 22 Pink Booth (140m)', pcr: 'Active Pink Patrol', color: '#06D6A0' },
+      { id: '21', name: 'Sector 21', desc: 'Residential Sector', x: 480, y: 285, w: 90, h: 60, score: 82, cctv: 10, lights: '86%', booth: 'Sec 21 Beat Post', pcr: 'Regular', color: '#FFD166' },
+      { id: '20', name: 'Sector 20', desc: 'Mosque & Vibrant Market', x: 580, y: 285, w: 90, h: 60, score: 79, cctv: 11, lights: '81%', booth: '400m away', pcr: 'Regular', color: '#FFD166' },
+
+      // Row 5: South Central (Dakshin Marg)
+      { id: '38', name: 'Sector 38', desc: 'West Residential Grid', x: 80, y: 360, w: 90, h: 60, score: 61, cctv: 7, lights: '62%', booth: 'Sec 39 Station nearby', pcr: 'Regular', color: '#FF6B6B' },
+      { id: '37', name: 'Sector 37', desc: 'Market & School Grid', x: 180, y: 360, w: 90, h: 60, score: 76, cctv: 9, lights: '79%', booth: 'Sec 37 Beat Post', pcr: 'Regular', color: '#FFD166' },
+      { id: '36', name: 'Sector 36', desc: 'MCM DAV College & Res', x: 280, y: 360, w: 90, h: 60, score: 85, cctv: 15, lights: '89%', booth: 'Sec 36 Station', pcr: 'Frequent', color: '#06D6A0' },
+      { id: '35', name: 'Sector 35', desc: 'Food Street & Commercial Hub', x: 380, y: 360, w: 90, h: 60, score: 89, cctv: 26, lights: '95%', booth: 'Sector 35 Pink Booth', pcr: 'Continuous PCR', color: '#06D6A0' },
+      { id: '34', name: 'Sector 34', desc: 'Commercial Coaching Hub', x: 480, y: 360, w: 90, h: 60, score: 82, cctv: 19, lights: '88%', booth: 'Sec 34 Police Station', pcr: 'Frequent', color: '#FFD166' },
+      { id: '33', name: 'Sector 33', desc: 'Terraced Flower Garden', x: 580, y: 360, w: 90, h: 60, score: 84, cctv: 12, lights: '87%', booth: '500m away', pcr: 'Regular', color: '#FFD166' },
+
+      // Row 6: South Artery (ISBT & GMCH-32)
+      { id: '43', name: 'Sector 43', desc: 'ISBT Inter-State Bus Terminal', x: 280, y: 435, w: 90, h: 60, score: 76, cctv: 25, lights: '85%', booth: 'ISBT Pink Booth (Platform 1)', pcr: 'ISBT Police Post', color: '#FFD166' },
+      { id: '44', name: 'Sector 44', desc: 'Residential & Markets', x: 380, y: 435, w: 90, h: 60, score: 80, cctv: 11, lights: '83%', booth: 'Sec 44 Post', pcr: 'Regular', color: '#FFD166' },
+      { id: '32', name: 'Sector 32', desc: 'GMCH Hospital Campus', x: 480, y: 435, w: 90, h: 60, score: 88, cctv: 24, lights: '94%', booth: 'Hospital Police Post', pcr: '24/7 Rapid', color: '#06D6A0' }
+    ];
+
+    // Pink Booths locations
+    const PINK_BOOTHS = [
+      { id: 'pb17', name: 'Pink Booth Sec 17', x: 425, y: 240, sector: 'Sector 17' },
+      { id: 'pb22', name: 'Pink Booth Sec 22 (Aroma)', x: 425, y: 315, sector: 'Sector 22' },
+      { id: 'pb35', name: 'Pink Booth Sec 35 Market', x: 425, y: 390, sector: 'Sector 35' },
+      { id: 'pb43', name: 'Pink Booth ISBT-43', x: 325, y: 465, sector: 'Sector 43' },
+      { id: 'pb14', name: 'Pink Booth PU Gate 2', x: 125, y: 240, sector: 'Sector 14' }
+    ];
+
+    // Animated Patrol Vehicles along routes
+    const PATROL_VEHICLES = [
+      { id: 'PCR-04', route: 'JanMarg', progress: 0.2, speed: 0.0018, name: 'PCR-04 Pink Patrol' },
+      { id: 'PCR-09', route: 'MadhyaMarg', progress: 0.6, speed: 0.0022, name: 'PCR-09 Rapid Unit' },
+      { id: 'PCR-12', route: 'DakshinMarg', progress: 0.45, speed: 0.0015, name: 'PCR-12 Beat Unit' }
+    ];
+
+    // Smart Waste Bins with fill rates
+    const WASTE_BINS = [
+      { id: 'wb1', x: 400, y: 300, fill: 42, sector: 'Sector 22' },
+      { id: 'wb2', x: 310, y: 230, fill: 88, sector: 'Sector 16' },
+      { id: 'wb3', x: 410, y: 220, fill: 25, sector: 'Sector 17' },
+      { id: 'wb4', x: 110, y: 230, fill: 65, sector: 'Sector 14' }
+    ];
+
+    /* ==========================================================================
+       TAB SWITCHING CONTROLLER
+       ========================================================================== */
+    function switchToTab(tabId) {
+      // Update Tab Buttons
+      document.querySelectorAll('.nav-tab-item').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      const activeBtn = document.getElementById(tabId);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      // Update Views with crossfade
+      const viewMap = {
+        'tab-home': 'view-home',
+        'tab-map': 'view-map',
+        'tab-safepath': 'view-safepath',
+        'tab-safety': 'view-safety',
+        'tab-report': 'view-report'
+      };
+
+      document.querySelectorAll('.tab-view').forEach(view => {
+        view.classList.remove('active');
+      });
+
+      const targetView = document.getElementById(viewMap[tabId]);
+      if (targetView) {
+        targetView.classList.add('active');
+        document.getElementById('mainViewport').scrollTop = 0;
+      }
+
+      APP_STATE.activeTab = tabId;
+
+      // Special Tab initialization
+      if (tabId === 'tab-map') {
+        setTimeout(initMapCanvas, 50);
+      } else if (tabId === 'tab-safepath') {
+        setTimeout(drawMiniRouteMap, 50);
+      }
+    }
+
+    function triggerSosCardHighlight() {
+      const sosCard = document.getElementById('sosCard');
+      if (sosCard) {
+        sosCard.scrollIntoView({ behavior: 'smooth' });
+        sosCard.style.boxShadow = '0 0 20px #FF6B6B';
+        setTimeout(() => {
+          sosCard.style.boxShadow = '';
+        }, 1500);
+      }
+    }
+
+    /* ==========================================================================
+       CLOCK & GREETING DYNAMICS
+       ========================================================================== */
+    function updateClockAndGreeting() {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const timeStr = `${hours}:${minutes}`;
+
+      const clockEl = document.getElementById('statusBarClock');
+      if (clockEl) clockEl.textContent = timeStr;
+
+      const greetingEl = document.getElementById('greetingText');
+      if (greetingEl) {
+        let greet = 'Good Evening, Priya 👋';
+        if (hours < 12) greet = 'Good Morning, Priya ☀️';
+        else if (hours < 17) greet = 'Good Afternoon, Priya 🌤️';
+        greetingEl.textContent = greet;
+      }
+    }
+    setInterval(updateClockAndGreeting, 1000);
+    updateClockAndGreeting();
+
+    /* ==========================================================================
+       TAB 2: INTERACTIVE 2D CHANDIGARH CANVAS MAP
+       ========================================================================== */
+    let canvas, ctx;
+    let animFrameId = null;
+
+    function initMapCanvas() {
+      canvas = document.getElementById('chandigarhCanvas');
+      if (!canvas) return;
+      ctx = canvas.getContext('2d');
+
+      const container = document.getElementById('canvasContainer');
+      const dpr = window.devicePixelRatio || 1;
+      const rect = container.getBoundingClientRect();
+
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+
+      // Default centering on Sector 22
+      if (APP_STATE.mapPan.x === 0 && APP_STATE.mapPan.y === 0) {
+        APP_STATE.mapPan.x = (rect.width / 2) - 390;
+        APP_STATE.mapPan.y = (rect.height / 2) - 290;
+      }
+
+      setupCanvasEvents(canvas, rect);
+      startMapAnimationLoop();
+    }
+
+    function setupCanvasEvents(canvasEl, rect) {
+      // Pointer drag & touch support
+      canvasEl.onmousedown = (e) => {
+        APP_STATE.isDraggingMap = true;
+        APP_STATE.dragStart.x = e.clientX - APP_STATE.mapPan.x;
+        APP_STATE.dragStart.y = e.clientY - APP_STATE.mapPan.y;
+      };
+
+      window.onmousemove = (e) => {
+        if (!APP_STATE.isDraggingMap) return;
+        APP_STATE.mapPan.x = e.clientX - APP_STATE.dragStart.x;
+        APP_STATE.mapPan.y = e.clientY - APP_STATE.dragStart.y;
+      };
+
+      window.onmouseup = () => {
+        APP_STATE.isDraggingMap = false;
+      };
+
+      // Click / Tap detection for sectors and items
+      canvasEl.onclick = (e) => {
+        const bound = canvasEl.getBoundingClientRect();
+        const clickX = (e.clientX - bound.left - APP_STATE.mapPan.x) / APP_STATE.mapZoom;
+        const clickY = (e.clientY - bound.top - APP_STATE.mapPan.y) / APP_STATE.mapZoom;
+
+        // Check sector hit
+        for (const sec of CHANDIGARH_SECTORS) {
+          if (clickX >= sec.x && clickX <= sec.x + sec.w &&
+              clickY >= sec.y && clickY <= sec.y + sec.h) {
+            showSectorPopup(sec);
+            return;
+          }
+        }
+
+        // Check Pink Booth hit
+        for (const pb of PINK_BOOTHS) {
+          const dist = Math.hypot(clickX - pb.x, clickY - pb.y);
+          if (dist < 18) {
+            showSimpleToast(`📍 ${pb.name} • 24/7 Women Help Desk Active`);
+            return;
+          }
+        }
+      };
+
+      // Touch events for mobile phones
+      canvasEl.ontouchstart = (e) => {
+        if (e.touches.length === 1) {
+          APP_STATE.isDraggingMap = true;
+          APP_STATE.dragStart.x = e.touches[0].clientX - APP_STATE.mapPan.x;
+          APP_STATE.dragStart.y = e.touches[0].clientY - APP_STATE.mapPan.y;
+        }
+      };
+
+      canvasEl.ontouchmove = (e) => {
+        if (APP_STATE.isDraggingMap && e.touches.length === 1) {
+          APP_STATE.mapPan.x = e.touches[0].clientX - APP_STATE.dragStart.x;
+          APP_STATE.mapPan.y = e.touches[0].clientY - APP_STATE.dragStart.y;
+        }
+      };
+
+      canvasEl.ontouchend = () => {
+        APP_STATE.isDraggingMap = false;
+      };
+    }
+
+    function zoomMap(factor) {
+      APP_STATE.mapZoom = Math.max(0.6, Math.min(2.2, APP_STATE.mapZoom * factor));
+    }
+
+    function resetMapView() {
+      const container = document.getElementById('canvasContainer');
+      const rect = container.getBoundingClientRect();
+      APP_STATE.mapZoom = 1.0;
+      APP_STATE.mapPan.x = (rect.width / 2) - 410;
+      APP_STATE.mapPan.y = (rect.height / 2) - 305;
+      showSimpleToast("Centered on your location in Sector 22");
+    }
+
+    function toggleMapLayer(layerKey, btn) {
+      APP_STATE.layers[layerKey] = !APP_STATE.layers[layerKey];
+      btn.classList.toggle('active', APP_STATE.layers[layerKey]);
+    }
+
+    function startMapAnimationLoop() {
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+
+      function loop() {
+        renderMap();
+        animFrameId = requestAnimationFrame(loop);
+      }
+      animFrameId = requestAnimationFrame(loop);
+    }
+
+    function renderMap() {
+      if (!ctx || !canvas) return;
+      const dpr = window.devicePixelRatio || 1;
+      const w = canvas.width / dpr;
+      const h = canvas.height / dpr;
+
+      ctx.clearRect(0, 0, w, h);
+
+      ctx.save();
+      ctx.translate(APP_STATE.mapPan.x, APP_STATE.mapPan.y);
+      ctx.scale(APP_STATE.mapZoom, APP_STATE.mapZoom);
+
+      // 1. Draw Chandigarh Natural Features (Sukhna Lake on Northeast)
+      ctx.fillStyle = '#BAE6FD';
+      ctx.beginPath();
+      ctx.ellipse(630, 40, 75, 30, Math.PI / 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0369A1';
+      ctx.font = 'bold 10px Inter';
+      ctx.fillText('Sukhna Lake ⛵', 590, 42);
+
+      // 2. Draw Major Arterial Roads
+      drawArterialRoads();
+
+      // 3. Draw Sectors (Grid)
+      for (const sec of CHANDIGARH_SECTORS) {
+        drawSectorCard(sec);
+      }
+
+      // 4. Draw Streetlights Layer
+      if (APP_STATE.layers.lights) {
+        drawStreetlights();
+      }
+
+      // 5. Draw Waste Bins Layer
+      if (APP_STATE.layers.waste) {
+        drawWasteBins();
+      }
+
+      // 6. Draw CCTV Cameras Layer
+      if (APP_STATE.layers.cctv) {
+        drawCctvMesh();
+      }
+
+      // 7. Draw Pink Booths Layer
+      if (APP_STATE.layers.booths) {
+        drawPinkBooths();
+      }
+
+      // 8. Draw Animated Police Patrol Vehicles
+      if (APP_STATE.layers.patrols) {
+        drawAnimatedPatrols();
+      }
+
+      // 9. Draw User's Live Pulsing Location (Sector 22 Market)
+      drawUserLocationPulse();
+
+      ctx.restore();
+    }
+
+    function drawArterialRoads() {
+      ctx.save();
+      // Madhya Marg (E-W Artery through middle)
+      ctx.strokeStyle = '#CBD5E1';
+      ctx.lineWidth = 14;
+      ctx.beginPath();
+      ctx.moveTo(50, 195);
+      ctx.lineTo(700, 195);
+      ctx.stroke();
+
+      // Dakshin Marg (E-W Southern Artery)
+      ctx.beginPath();
+      ctx.moveTo(50, 345);
+      ctx.lineTo(700, 345);
+      ctx.stroke();
+
+      // Jan Marg (N-S Boulevard Capitol down through Sec 17/22/35/43)
+      ctx.beginPath();
+      ctx.moveTo(375, 40);
+      ctx.lineTo(375, 520);
+      ctx.stroke();
+
+      // Himalaya Marg
+      ctx.beginPath();
+      ctx.moveTo(475, 40);
+      ctx.lineTo(475, 520);
+      ctx.stroke();
+
+      // Road Labels
+      ctx.fillStyle = '#475569';
+      ctx.font = 'bold 9px Inter';
+      ctx.fillText('MADHYA MARG (V2)', 80, 198);
+      ctx.fillText('DAKSHIN MARG (V2)', 80, 348);
+
+      ctx.save();
+      ctx.translate(372, 490);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText('JAN MARG (TO CAPITOL)', 0, 0);
+      ctx.restore();
+
+      ctx.restore();
+    }
+
+    function drawSectorCard(sec) {
+      ctx.save();
+      // Sector card background based on safety score
+      let fillColor = '#FFFFFF';
+      let strokeColor = '#E2E8F0';
+
+      if (APP_STATE.layers.safety) {
+        if (sec.score >= 85) {
+          fillColor = '#ECFDF5';
+          strokeColor = '#A7F3D0';
+        } else if (sec.score >= 70) {
+          fillColor = '#FFFBEB';
+          strokeColor = '#FDE68A';
+        } else {
+          fillColor = '#FEF2F2';
+          strokeColor = '#FECACA';
+        }
+      }
+
+      // Highlight Sector 22 (User Location)
+      if (sec.id === '22') {
+        strokeColor = '#00B4D8';
+        ctx.lineWidth = 2.5;
+      } else {
+        ctx.lineWidth = 1;
+      }
+
+      ctx.fillStyle = fillColor;
+      ctx.strokeStyle = strokeColor;
+      
+      // Rounded sector rect
+      roundRect(ctx, sec.x, sec.y, sec.w, sec.h, 6, true, true);
+
+      // Sector Header Text
+      ctx.fillStyle = '#1E293B';
+      ctx.font = 'bold 11px Inter';
+      ctx.fillText(sec.name, sec.x + 8, sec.y + 18);
+
+      // Sector Subtitle / Landmark
+      ctx.fillStyle = '#64748B';
+      ctx.font = '8px Inter';
+      const shortDesc = sec.desc.length > 16 ? sec.desc.substring(0, 15) + '…' : sec.desc;
+      ctx.fillText(shortDesc, sec.x + 8, sec.y + 32);
+
+      // Safety Score Badge
+      if (APP_STATE.layers.safety) {
+        ctx.fillStyle = sec.score >= 85 ? '#065F46' : (sec.score >= 70 ? '#92400E' : '#991B1B');
+        ctx.font = 'bold 9px Inter';
+        ctx.fillText(`🛡️ ${sec.score}`, sec.x + 8, sec.y + 48);
+      }
+
+      ctx.restore();
+    }
+
+    function drawStreetlights() {
+      ctx.save();
+      // Streetlights at key junctions along roads
+      const lightPoints = [
+        { x: 175, y: 195 }, { x: 275, y: 195 }, { x: 375, y: 195 }, { x: 475, y: 195 }, { x: 575, y: 195 },
+        { x: 375, y: 135 }, { x: 375, y: 275 }, { x: 375, y: 345 }, { x: 375, y: 420 },
+        { x: 475, y: 275 }, { x: 475, y: 345 }, { x: 475, y: 420 }
+      ];
+
+      for (const lp of lightPoints) {
+        // Soft yellow halo
+        const grad = ctx.createRadialGradient(lp.x, lp.y, 1, lp.x, lp.y, 10);
+        grad.addColorStop(0, 'rgba(255, 230, 100, 0.7)');
+        grad.addColorStop(1, 'rgba(255, 230, 100, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(lp.x, lp.y, 10, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Bulb center
+        ctx.fillStyle = '#F59E0B';
+        ctx.beginPath();
+        ctx.arc(lp.x, lp.y, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawWasteBins() {
+      ctx.save();
+      for (const wb of WASTE_BINS) {
+        // Draw smart bin
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(wb.x - 5, wb.y - 7, 10, 14);
+
+        // Fill bar inside bin
+        const fillHeight = 12 * (wb.fill / 100);
+        ctx.fillStyle = wb.fill > 80 ? '#EF4444' : '#10B981';
+        ctx.fillRect(wb.x - 4, wb.y + 6 - fillHeight, 8, fillHeight);
+
+        // Percentage label
+        ctx.fillStyle = '#0F172A';
+        ctx.font = 'bold 7px Inter';
+        ctx.fillText(`${wb.fill}%`, wb.x - 8, wb.y + 16);
+      }
+      ctx.restore();
+    }
+
+    function drawCctvMesh() {
+      ctx.save();
+      const cctvNodes = [
+        { x: 380, y: 215 }, { x: 470, y: 215 }, { x: 380, y: 290 },
+        { x: 470, y: 290 }, { x: 175, y: 215 }, { x: 280, y: 215 }
+      ];
+
+      for (const node of cctvNodes) {
+        ctx.fillStyle = '#0284C7';
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // CCTV view cone
+        ctx.fillStyle = 'rgba(2, 132, 199, 0.1)';
+        ctx.beginPath();
+        ctx.moveTo(node.x, node.y);
+        ctx.arc(node.x, node.y, 14, -0.4, 0.4);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawPinkBooths() {
+      ctx.save();
+      for (const pb of PINK_BOOTHS) {
+        // Pink shield pin
+        ctx.fillStyle = '#EC4899';
+        ctx.beginPath();
+        ctx.arc(pb.x, pb.y, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 8px Inter';
+        ctx.fillText('PB', pb.x - 5, pb.y + 3);
+      }
+      ctx.restore();
+    }
+
+    function drawAnimatedPatrols() {
+      ctx.save();
+      const time = Date.now();
+
+      for (const p of PATROL_VEHICLES) {
+        // Calculate vehicle coordinate along predefined corridor
+        let vx = 0, vy = 0;
+        p.progress = (p.progress + p.speed) % 1;
+
+        if (p.route === 'JanMarg') {
+          vx = 375;
+          vy = 70 + p.progress * 420;
+        } else if (p.route === 'MadhyaMarg') {
+          vx = 80 + p.progress * 560;
+          vy = 195;
+        } else {
+          vx = 80 + p.progress * 560;
+          vy = 345;
+        }
+
+        // Vehicle Body (Police Car)
+        ctx.fillStyle = '#1E3A8A';
+        ctx.beginPath();
+        ctx.arc(vx, vy, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Flashing Emergency Beacon (Alternating Blue/Red)
+        const isRed = Math.floor(time / 250) % 2 === 0;
+        ctx.fillStyle = isRed ? '#EF4444' : '#3B82F6';
+        ctx.beginPath();
+        ctx.arc(vx, vy, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Label
+        ctx.fillStyle = '#1E293B';
+        ctx.font = 'bold 8px Inter';
+        ctx.fillText(p.id, vx + 9, vy + 3);
+      }
+      ctx.restore();
+    }
+
+    function drawUserLocationPulse() {
+      ctx.save();
+      // Sector 22 Market coords
+      const ux = 425;
+      const uy = 315;
+      const time = Date.now();
+      const pulseRadius = 12 + (Math.sin(time / 200) * 4);
+
+      // Radar ping wave
+      ctx.strokeStyle = 'rgba(0, 180, 216, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(ux, uy, pulseRadius + 6, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Outer halo
+      ctx.fillStyle = 'rgba(0, 180, 216, 0.25)';
+      ctx.beginPath();
+      ctx.arc(ux, uy, 12, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Center blue dot
+      ctx.fillStyle = '#00B4D8';
+      ctx.beginPath();
+      ctx.arc(ux, uy, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Text badge: "YOU"
+      ctx.fillStyle = '#0077B6';
+      ctx.font = 'bold 9px Inter';
+      ctx.fillText('YOU (Sec 22)', ux + 12, uy + 4);
+
+      ctx.restore();
+    }
+
+    function showSectorPopup(sec) {
+      const card = document.getElementById('mapPopupCard');
+      document.getElementById('popSectorName').textContent = `${sec.name} (${sec.desc.split('&')[0]})`;
+      document.getElementById('popSectorSub').textContent = sec.desc;
+      
+      const tag = document.getElementById('popSafetyTag');
+      tag.textContent = `Score: ${sec.score}/100`;
+      if (sec.score >= 85) {
+        tag.style.background = 'var(--safe-light)';
+        tag.style.color = 'var(--safe-dark)';
+      } else if (sec.score >= 70) {
+        tag.style.background = 'var(--warning-light)';
+        tag.style.color = '#B45309';
+      } else {
+        tag.style.background = 'var(--alert-light)';
+        tag.style.color = 'var(--alert-dark)';
+      }
+
+      document.getElementById('popPinkBooth').textContent = sec.booth;
+      document.getElementById('popCctv').textContent = `${sec.cctv} Cameras Online`;
+      document.getElementById('popLighting').textContent = sec.lights;
+      document.getElementById('popPatrol').textContent = sec.pcr;
+
+      card.classList.add('open');
+    }
+
+    function closeMapPopup() {
+      document.getElementById('mapPopupCard').classList.remove('open');
+    }
+
+    function startNavToSector() {
+      closeMapPopup();
+      switchToTab('tab-safepath');
+      showSimpleToast("SafePath Route Calculated to Destination!");
+    }
+
+    function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+      if (fill) ctx.fill();
+      if (stroke) ctx.stroke();
+    }
+
+    /* ==========================================================================
+       TAB 3: SAFEPATH & MINI ROUTE CANVAS
+       ========================================================================== */
+    function selectRoute(routeId) {
+      APP_STATE.selectedRoute = routeId;
+      document.getElementById('routeCardA').classList.toggle('selected', routeId === 'A');
+      document.getElementById('routeCardB').classList.toggle('selected', routeId === 'B');
+      drawMiniRouteMap();
+    }
+
+    function drawMiniRouteMap() {
+      const miniCanvas = document.getElementById('miniRouteCanvas');
+      if (!miniCanvas) return;
+      const mctx = miniCanvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const rect = miniCanvas.getBoundingClientRect();
+
+      miniCanvas.width = rect.width * dpr;
+      miniCanvas.height = rect.height * dpr;
+      mctx.scale(dpr, dpr);
+
+      const mw = rect.width;
+      const mh = rect.height;
+
+      mctx.clearRect(0, 0, mw, mh);
+
+      // Background grid hint
+      mctx.strokeStyle = '#E2E8F0';
+      mctx.lineWidth = 1;
+      for (let x = 30; x < mw; x += 40) {
+        mctx.beginPath();
+        mctx.moveTo(x, 0);
+        mctx.lineTo(x, mh);
+        mctx.stroke();
+      }
+      for (let y = 20; y < mh; y += 30) {
+        mctx.beginPath();
+        mctx.moveTo(0, y);
+        mctx.lineTo(mw, y);
+        mctx.stroke();
+      }
+
+      // Landmarks
+      mctx.fillStyle = '#64748B';
+      mctx.font = 'bold 9px Inter';
+      mctx.fillText('Sector 14 (PU Campus)', 40, 30);
+      mctx.fillText('Sector 22 Market (Start)', mw - 140, mh - 20);
+
+      // ROUTE A: Standard Cut-through (Orange line with warning)
+      mctx.strokeStyle = '#F59E0B';
+      mctx.lineWidth = APP_STATE.selectedRoute === 'A' ? 4 : 2;
+      mctx.setLineDash([5, 5]);
+      mctx.beginPath();
+      mctx.moveTo(mw - 60, mh - 35); // Sec 22
+      mctx.lineTo(mw / 2, mh / 2 + 10); // Cut through Sec 23-24
+      mctx.lineTo(70, 45); // Sec 14
+      mctx.stroke();
+      mctx.setLineDash([]);
+
+      // Warning marker on Route A
+      mctx.fillStyle = '#EF4444';
+      mctx.font = '10px Inter';
+      mctx.fillText('⚠️ Blindspot', mw / 2 - 20, mh / 2);
+
+      // ROUTE B: SafePath (Green bold line via Madhya Marg & Jan Marg)
+      mctx.strokeStyle = '#06D6A0';
+      mctx.lineWidth = APP_STATE.selectedRoute === 'B' ? 5 : 2.5;
+      mctx.beginPath();
+      mctx.moveTo(mw - 60, mh - 35); // Sec 22
+      mctx.lineTo(mw - 60, 65);       // Up along Jan Marg
+      mctx.lineTo(70, 65);            // Across Madhya Marg
+      mctx.lineTo(70, 45);            // Into PU Gate
+      mctx.stroke();
+
+      // SafePath Pink Booth indicators
+      mctx.fillStyle = '#EC4899';
+      mctx.beginPath();
+      mctx.arc(mw - 60, mh - 35, 6, 0, Math.PI * 2);
+      mctx.fill();
+      mctx.beginPath();
+      mctx.arc(70, 65, 6, 0, Math.PI * 2);
+      mctx.fill();
+
+      // Start & End nodes
+      mctx.fillStyle = '#00B4D8';
+      mctx.beginPath();
+      mctx.arc(mw - 60, mh - 35, 4, 0, Math.PI * 2);
+      mctx.fill();
+
+      mctx.fillStyle = '#06D6A0';
+      mctx.beginPath();
+      mctx.arc(70, 45, 5, 0, Math.PI * 2);
+      mctx.fill();
+    }
+
+    function startNavigationSimulation() {
+      APP_STATE.isNavigating = true;
+      document.getElementById('activeNavOverlay').classList.add('visible');
+
+      let remainingSec = 11 * 60;
+      let dist = 3.4;
+
+      if (APP_STATE.navInterval) clearInterval(APP_STATE.navInterval);
+
+      APP_STATE.navInterval = setInterval(() => {
+        remainingSec -= 2;
+        dist = Math.max(0, dist - 0.02);
+
+        const mins = Math.floor(remainingSec / 60);
+        document.getElementById('navTimeRemaining').textContent = `${mins} min`;
+        document.getElementById('navDistRemaining').textContent = `${dist.toFixed(1)} km`;
+
+        // Progress bar simulation
+        const pct = Math.min(100, Math.floor(((3.4 - dist) / 3.4) * 100));
+        document.getElementById('navLiveProgressBar').style.width = `${pct}%`;
+
+        // Simulated Turn-by-Turn Instruction Update
+        if (pct > 60) {
+          document.getElementById('navTurnTitle').textContent = 'In 80m, Turn Left into PU Gate 2';
+          document.getElementById('navTurnSub').textContent = 'Pink Police Booth present at entrance gate';
+        } else if (pct > 30) {
+          document.getElementById('navTurnTitle').textContent = 'Continue Straight on Madhya Marg';
+          document.getElementById('navTurnSub').textContent = '100% lit smart poles • Camera #14-02 in view';
+        }
+
+        if (dist <= 0) {
+          stopNavigationSimulation();
+          showSimpleToast("🎉 You have arrived safely at PU Campus!");
+        }
+      }, 1000);
+    }
+
+    function stopNavigationSimulation() {
+      APP_STATE.isNavigating = false;
+      if (APP_STATE.navInterval) clearInterval(APP_STATE.navInterval);
+      document.getElementById('activeNavOverlay').classList.remove('visible');
+      showSimpleToast("Navigation ended safely.");
+    }
+
+    /* ==========================================================================
+       TAB 4: WOMEN'S SAFETY TOOLKIT INTERACTIONS
+       ========================================================================== */
+    
+    // 4A: Escort Walk Timer
+    function toggleEscortWalk() {
+      const btn = document.getElementById('escortToggleBtn');
+      const badge = document.getElementById('escortBadgeStatus');
+      const msg = document.getElementById('escortStatusMsg');
+
+      if (!APP_STATE.escortTimerActive) {
+        // Start Escort
+        const durMins = parseInt(document.getElementById('escortEtaSelect').value, 10);
+        APP_STATE.escortRemainingSec = durMins * 60;
+        APP_STATE.escortTimerActive = true;
+
+        btn.textContent = 'I Have Arrived Safely ✓';
+        btn.style.background = '#06D6A0';
+        badge.textContent = 'ESCORT ACTIVE';
+        badge.style.background = '#ECFDF5';
+        badge.style.color = '#065F46';
+        msg.textContent = 'ICCC Virtual Companion linked. Checking every 5 mins.';
+
+        if (APP_STATE.escortInterval) clearInterval(APP_STATE.escortInterval);
+        APP_STATE.escortInterval = setInterval(tickEscortTimer, 1000);
+
+        showSimpleToast("Escort Walk Started. Stay safe!");
+      } else {
+        // Arrived safely
+        clearInterval(APP_STATE.escortInterval);
+        APP_STATE.escortTimerActive = false;
+
+        btn.textContent = 'Start Escort Walk 🚶';
+        btn.style.background = 'var(--primary)';
+        badge.textContent = 'COMPLETED';
+        badge.style.background = '#F1F5F9';
+        badge.style.color = 'var(--text-muted)';
+        msg.textContent = 'You confirmed safe arrival. Companion closed.';
+        document.getElementById('escortClockDisplay').textContent = '15:00';
+
+        showSimpleToast("🎉 Great to hear you arrived safely!");
+      }
+    }
+
+    function tickEscortTimer() {
+      if (APP_STATE.escortRemainingSec <= 0) {
+        clearInterval(APP_STATE.escortInterval);
+        simulateCheckInPrompt();
+        return;
+      }
+      APP_STATE.escortRemainingSec--;
+      const m = Math.floor(APP_STATE.escortRemainingSec / 60);
+      const s = String(APP_STATE.escortRemainingSec % 60).padStart(2, '0');
+      document.getElementById('escortClockDisplay').textContent = `${m}:${s}`;
+    }
+
+    function simulateCheckInPrompt() {
+      const modal = document.getElementById('escalationPromptModal');
+      const bar = document.getElementById('escalationTimerBar');
+      const secLeft = document.getElementById('escalationSecondsLeft');
+      modal.classList.add('open');
+
+      let countdown = 60;
+      secLeft.textContent = countdown;
+      bar.style.width = '100%';
+
+      if (APP_STATE.escalationBarInterval) clearInterval(APP_STATE.escalationBarInterval);
+
+      APP_STATE.escalationBarInterval = setInterval(() => {
+        countdown--;
+        secLeft.textContent = countdown;
+        bar.style.width = `${(countdown / 60) * 100}%`;
+
+        if (countdown <= 0) {
+          clearInterval(APP_STATE.escalationBarInterval);
+          modal.classList.remove('open');
+          // Trigger Emergency Escalation
+          triggerSosNow();
+        }
+      }, 1000);
+    }
+
+    function acknowledgeEscortSafety() {
+      if (APP_STATE.escalationBarInterval) clearInterval(APP_STATE.escalationBarInterval);
+      document.getElementById('escalationPromptModal').classList.remove('open');
+      showSimpleToast("Safety verified. Escort companion resumed ✓");
+      performSafeCheckIn();
+    }
+
+    // 4B: Duress PIN
+    function openDuressTestModal() {
+      document.getElementById('duressSplitModal').classList.add('open');
+    }
+    function closeDuressModal() {
+      document.getElementById('duressSplitModal').classList.remove('open');
+    }
+
+    // 4C: I'm Safe Check-In
+    function performSafeCheckIn() {
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0];
+      const list = document.getElementById('checkinHistoryList');
+
+      const entry = document.createElement('div');
+      entry.className = 'checkin-entry';
+      entry.style.animation = 'fadeIn 0.4s ease';
+      entry.innerHTML = `<span>Sector 22-B Verified Check-in</span><b>${timeStr}</b>`;
+
+      list.prepend(entry);
+      // Keep only last 5 entries
+      if (list.children.length > 5) {
+        list.removeChild(list.lastChild);
+      }
+
+      showSimpleToast("Safe status logged & shared with emergency contacts ✓");
+    }
+
+    // 4D: Press & Hold SOS Button (3 Seconds)
+    const sosWrapper = document.getElementById('sosHoldBtn');
+    const ringProgress = document.getElementById('sosProgressRing');
+    const TOTAL_RING = 408.4; // 2 * PI * 65
+
+    function startSosHold(e) {
+      if (e) e.preventDefault();
+      APP_STATE.sosHolding = true;
+      APP_STATE.sosHoldStartTime = Date.now();
+
+      if (APP_STATE.sosHoldTimer) clearInterval(APP_STATE.sosHoldTimer);
+
+      APP_STATE.sosHoldTimer = setInterval(() => {
+        if (!APP_STATE.sosHolding) return;
+        const elapsed = Date.now() - APP_STATE.sosHoldStartTime;
+        const progress = Math.min(1, elapsed / 3000);
+        const offset = TOTAL_RING * (1 - progress);
+        ringProgress.style.strokeDashoffset = offset;
+
+        if (progress >= 1) {
+          endSosHold();
+          triggerSosNow();
+        }
+      }, 50);
+    }
+
+    function endSosHold() {
+      APP_STATE.sosHolding = false;
+      if (APP_STATE.sosHoldTimer) clearInterval(APP_STATE.sosHoldTimer);
+      ringProgress.style.strokeDashoffset = TOTAL_RING;
+    }
+
+    // Event listeners for press & hold (Desktop Mouse & Mobile Touch)
+    sosWrapper.addEventListener('mousedown', startSosHold);
+    window.addEventListener('mouseup', endSosHold);
+    sosWrapper.addEventListener('touchstart', startSosHold, { passive: false });
+    window.addEventListener('touchend', endSosHold);
+
+    
+    // ══════════════════════════════════════════════════════════════
+    // 30-SECOND LOUD SOS EMERGENCY SIREN AUDIO ENGINE
+    // ══════════════════════════════════════════════════════════════
+    let sosAudioCtx = null;
+    let sosOscillator = null;
+    let sosGainNode = null;
+    let sosWarbleTimer = null;
+    let sosCountdownTimer = null;
+    let sosTimeLeft = 30;
+    let isSirenSoundPlaying = false;
+
+    function start30SecSosSiren() {
+      try {
+        if (!sosAudioCtx) {
+          sosAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (sosAudioCtx.state === 'suspended') {
+          sosAudioCtx.resume();
+        }
+
+        // Stop any previous siren
+        stopSosSirenManually(false);
+
+        // Create oscillator & gain
+        sosOscillator = sosAudioCtx.createOscillator();
+        sosGainNode = sosAudioCtx.createGain();
+
+        sosOscillator.type = 'sawtooth';
+        sosOscillator.frequency.setValueAtTime(880, sosAudioCtx.currentTime); // High pitch alert
+        sosGainNode.gain.setValueAtTime(0.25, sosAudioCtx.currentTime);
+
+        sosOscillator.connect(sosGainNode);
+        sosGainNode.connect(sosAudioCtx.destination);
+        sosOscillator.start();
+        isSirenSoundPlaying = true;
+
+        // Dual-tone police/ambulance warble effect (880Hz <-> 1450Hz)
+        let highTone = false;
+        sosWarbleTimer = setInterval(() => {
+          if (!sosOscillator || !sosAudioCtx) return;
+          highTone = !highTone;
+          const targetFreq = highTone ? 1450 : 880;
+          sosOscillator.frequency.setTargetAtTime(targetFreq, sosAudioCtx.currentTime, 0.08);
+        }, 320);
+
+        // 30-Second Countdown Timer
+        sosTimeLeft = 30;
+        updateSirenDisplay(sosTimeLeft);
+        document.body.classList.add('sos-strobe-active');
+
+        // Haptic feedback vibration for mobile devices
+        if ('vibrate' in navigator) {
+          navigator.vibrate([500, 250, 500, 250, 500, 250, 800]);
+        }
+
+        sosCountdownTimer = setInterval(() => {
+          sosTimeLeft--;
+          updateSirenDisplay(sosTimeLeft);
+
+          if (sosTimeLeft <= 0) {
+            stopSosSirenManually(true);
+          }
+        }, 1000);
+
+      } catch (err) {
+        console.warn('Audio API warning:', err);
+      }
+    }
+
+    function updateSirenDisplay(secs) {
+      const display = document.getElementById('sosCountdownDisplay');
+      const rem = document.getElementById('sosSecondsRemaining');
+      if (display) {
+        const s = secs < 10 ? '0' + secs : secs;
+        display.textContent = '00:' + s;
+      }
+      if (rem) {
+        rem.textContent = secs;
+      }
+    }
+
+    function stopSosSirenManually(isAutoTimeout = false) {
+      if (sosWarbleTimer) {
+        clearInterval(sosWarbleTimer);
+        sosWarbleTimer = null;
+      }
+      if (sosCountdownTimer) {
+        clearInterval(sosCountdownTimer);
+        sosCountdownTimer = null;
+      }
+
+      if (sosOscillator) {
+        try {
+          sosOscillator.stop();
+          sosOscillator.disconnect();
+        } catch (e) {}
+        sosOscillator = null;
+      }
+
+      isSirenSoundPlaying = false;
+      document.body.classList.remove('sos-strobe-active');
+
+      const banner = document.getElementById('sosSirenBanner');
+      if (banner && isAutoTimeout) {
+        banner.style.border = '2px solid #22c55e';
+        banner.style.background = 'rgba(34, 197, 94, 0.2)';
+        banner.innerHTML = '<div style="color: #86efac; font-weight: 800; font-size: 13px;">✅ 30-SECOND AUDIBLE SIREN COMPLETE • SILENCED</div><div style="font-size: 11px; color: #bbf7d0; margin-top: 4px;">Emergency GPS Beacon still transmitting to PCR-04 and 112 Control Room.</div>';
+      } else if (banner && !isAutoTimeout) {
+        const display = document.getElementById('sosCountdownDisplay');
+        if (display) display.textContent = 'MUTED';
+      }
+    }
+
+    function triggerSosNow() {
+      start30SecSosSiren();
+      document.getElementById('emergencyAlertModal').classList.add('active');
+      showSimpleToast("🚨 EMERGENCY SOS BROADCASTED TO ICCC!");
+    }
+
+    function cancelEmergencySos() {
+      const pin = (document.getElementById('cancelPinInput').value || '').trim();
+
+      if (pin === '9999') {
+        // ════════════════════════════════════════════════════════════════════
+        // DURESS PIN 9999: VICTIM IS UNDER ACTIVE COERCION / FORCED BY ATTACKER
+        // ════════════════════════════════════════════════════════════════════
+        // 1. Immediately silence loud audible siren so attacker believes victim complied
+        stopSosSirenManually(false);
+
+        // 2. Dismiss modal smoothly to show calm normal screen
+        document.getElementById('emergencyAlertModal').classList.remove('active');
+        document.getElementById('cancelPinInput').value = '';
+
+        // 3. Fake innocent disarm toast (attacker watching screen sees innocent success message)
+        showSimpleToast("✓ System Disarmed. Standdown Confirmed.");
+
+        // 4. TRIGGER COVERT SILENT TRANSMISSION IN THE BACKGROUND
+        window.isDuressCoercionActive = true;
+        try { localStorage.setItem('urbanmesh_duress_active', 'true'); } catch(e) {}
+
+        console.warn("%c🚨 [CODE BLACK: DURESS PIN 9999 ENTERED] VICTIM UNDER HOSTAGE COERCION!", "background: #b91c1c; color: white; font-size: 16px; font-weight: bold; padding: 6px;");
+        console.warn("ICCC Silent Priority 1 Hostage Protocol Activated. PCR-04 alerted for STEALTH INTERCEPTION (Silent approach, lights/sirens prohibited).");
+
+        // Subtle covert indicator in top header (turns live dot red)
+        const liveDot = document.querySelector('.badge-live') || document.querySelector('.status-dot');
+        if (liveDot) {
+          liveDot.style.background = '#ef4444';
+          liveDot.title = 'Silent Duress Beacon Active';
+        }
+
+        // Background high-frequency silent GPS telemetry loop (every 5 seconds)
+        if (window.duressBeaconTimer) clearInterval(window.duressBeaconTimer);
+        window.duressBeaconTimer = setInterval(() => {
+          console.log('[SILENT DURESS BEACON] Transmitting covert GPS coords (30.7384° N, 76.7725° E) & ambient mic buffer to Police Control Room.');
+        }, 5000);
+
+      } else if (pin === '1234') {
+        // Genuine authorization PIN
+        document.getElementById('emergencyAlertModal').classList.remove('active');
+        stopSosSirenManually(false);
+        document.getElementById('cancelPinInput').value = '';
+
+        if (window.duressBeaconTimer) {
+          clearInterval(window.duressBeaconTimer);
+          window.duressBeaconTimer = null;
+        }
+        window.isDuressCoercionActive = false;
+        try { localStorage.removeItem('urbanmesh_duress_active'); } catch(e) {}
+
+        showSimpleToast("SOS Deactivated. Standdown broadcasted.");
+      } else {
+        alert("Incorrect security PIN. Please enter your 4-digit code (1234) or verify authorization.");
+      }
+    }
+
+    /* ==========================================================================
+       TAB 5: REPORT CIVIC ISSUE FORM
+       ========================================================================== */
+    function selectCategory(el, catName) {
+      document.querySelectorAll('.category-chip').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      document.getElementById('reportCategoryInput').value = catName;
+    }
+
+    function selectSeverity(el, sevVal) {
+      document.querySelectorAll('.sev-pill').forEach(p => p.className = 'sev-pill');
+      el.classList.add('active', sevVal.toLowerCase());
+      document.getElementById('reportSeverityInput').value = sevVal;
+    }
+
+    function simulatePhotoUpload() {
+      const placeholder = document.getElementById('uploadPlaceholderContent');
+      const preview = document.getElementById('uploadedPhotoPreview');
+
+      placeholder.style.display = 'none';
+      preview.style.display = 'block';
+      // Inline simulated evidence photograph (Broken streetlight pole in Sector 22)
+      preview.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 220'><rect width='400' height='220' fill='%231E293B'/><line x1='200' y1='220' x2='200' y2='60' stroke='%2364748B' stroke-width='14'/><path d='M190 60 L240 50 L240 70 Z' fill='%2394A3B8'/><circle cx='240' cy='60' r='16' fill='%23F87171'/><text x='20' y='30' fill='%23E2E8F0' font-family='sans-serif' font-size='12' font-weight='bold'>SECTOR 22-B SMART POLE #22-L-04</text><text x='20' y='50' fill='%2394A3B8' font-family='sans-serif' font-size='10'>GPS: 30.7384° N, 76.7725° E • TIMESTAMP: 19:42:10</text></svg>";
+
+      showSimpleToast("Photo Attached & AI Geo-tagged 📷");
+    }
+
+    function refreshGpsLocation() {
+      showSimpleToast("GPS Refreshed: High Accuracy (±1.5m) Sector 22-B");
+    }
+
+    function handleReportSubmit(e) {
+      e.preventDefault();
+      const submitBtn = document.getElementById('btnSubmitReport');
+      submitBtn.innerHTML = 'Submitting to Chandigarh Mesh... ⏳';
+      submitBtn.disabled = true;
+
+      setTimeout(() => {
+        submitBtn.innerHTML = 'Submit Civic Report 🚀';
+        submitBtn.disabled = false;
+
+        const ticketId = `CHD-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+        document.getElementById('generatedTicketId').textContent = ticketId;
+        const successCard = document.getElementById('ticketSuccessCard');
+        successCard.classList.add('visible');
+        successCard.scrollIntoView({ behavior: 'smooth' });
+
+        showSimpleToast(`Ticket ${ticketId} created!`);
+      }, 1200);
+    }
+
+    /* ==========================================================================
+       TOAST UTILITY
+       ========================================================================== */
+    let toastTimeout = null;
+    function showSimpleToast(msg) {
+      const toast = document.getElementById('appToast');
+      document.getElementById('toastMessage').textContent = msg;
+      toast.classList.add('show');
+
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2800);
+    }
+
+    /* ==========================================================================
+       WINDOW ONLOAD INITIALIZATION
+       ========================================================================== */
+    window.addEventListener('load', () => {
+      // Initialize map on start
+      initMapCanvas();
+      drawMiniRouteMap();
+    });
+
+    window.addEventListener('resize', () => {
+      if (APP_STATE.activeTab === 'tab-map') {
+        initMapCanvas();
+      } else if (APP_STATE.activeTab === 'tab-safepath') {
+        drawMiniRouteMap();
+      }
+    });
+  </script>
+
+
+  <!-- Google Maps Explore Overlay for Citizen App -->
+  <div class="citizen-gmap-overlay" id="citizenGmapOverlay">
+    <div class="citizen-gmap-bar">
+      <h3>📍 Google Maps — Chandigarh Safety Exploration</h3>
+      <button onclick="closeCitizenGmap()">✕ Close Map</button>
+    </div>
+    <div class="gmap-poi-chips">
+      <button class="gmap-poi-chip active" onclick="setCitizenGmapView('overview', this)">🏙️ City Overview</button>
+      <button class="gmap-poi-chip" onclick="setCitizenGmapView('sector17', this)">🛍️ Sector 17 Plaza</button>
+      <button class="gmap-poi-chip" onclick="setCitizenGmapView('sector22', this)">🏪 Sector 22 Market</button>
+      <button class="gmap-poi-chip" onclick="setCitizenGmapView('pgimer', this)">🏥 PGIMER Hospital</button>
+      <button class="gmap-poi-chip" onclick="setCitizenGmapView('rosegarden', this)">🌹 Rose Garden</button>
+      <button class="gmap-poi-chip" onclick="setCitizenGmapView('elante', this)">🏬 Elante Mall</button>
+      <button class="gmap-poi-chip" onclick="setCitizenGmapView('sukhna', this)">🌊 Sukhna Lake</button>
+      <button class="gmap-poi-chip" onclick="setCitizenGmapView('busstand', this)">🚌 ISBT Bus Stand</button>
+    </div>
+    <div class="citizen-gmap-frame">
+      <iframe id="citizenGmapIframe" loading="lazy" src="about:blank" allow="fullscreen" title="Google Maps Chandigarh"></iframe>
+    </div>
+  </div>
+
+  <script>
+    const CITIZEN_GMAP_POIS = {
+      overview:   { lat: 30.7412, lng: 76.7684, zoom: 14, t: 'k' },
+      sector17:   { lat: 30.7415, lng: 76.7832, zoom: 17, t: 'k' },
+      sector22:   { lat: 30.7350, lng: 76.7690, zoom: 17, t: 'k' },
+      pgimer:     { lat: 30.7640, lng: 76.7765, zoom: 16, t: 'k' },
+      rosegarden: { lat: 30.7508, lng: 76.7828, zoom: 17, t: 'k' },
+      elante:     { lat: 30.7060, lng: 76.8018, zoom: 17, t: 'k' },
+      sukhna:     { lat: 30.7421, lng: 76.8187, zoom: 15, t: 'k' },
+      busstand:   { lat: 30.7106, lng: 76.7607, zoom: 16, t: 'k' }
+    };
+    let citizenGmapLoaded = false;
+
+    function openCitizenGmap() {
+      document.getElementById('citizenGmapOverlay').classList.add('active');
+      if (!citizenGmapLoaded) {
+        setCitizenGmapView('overview', document.querySelector('.gmap-poi-chip'));
+        citizenGmapLoaded = true;
+      }
+    }
+
+    function closeCitizenGmap() {
+      document.getElementById('citizenGmapOverlay').classList.remove('active');
+    }
+
+    function setCitizenGmapView(key, btn) {
+      const poi = CITIZEN_GMAP_POIS[key] || CITIZEN_GMAP_POIS.overview;
+      document.getElementById('citizenGmapIframe').src =
+        'https://maps.google.com/maps?q=' + poi.lat + ',' + poi.lng + '&t=' + poi.t + '&z=' + poi.zoom + '&output=embed&iwloc=near';
+      document.querySelectorAll('.gmap-poi-chip').forEach(c => c.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+    }
+  </script>
+
+<!-- ══════════ URBAN MESH GEMINI AI COPILOT ══════════ -->
+<style>
+  .copilot-fab {
+    position: fixed;
+    bottom: 26px;
+    right: 26px;
+    z-index: 99999;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00F0FF, #9D4EDD);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 32px rgba(0, 240, 255, 0.45), 0 0 45px rgba(157, 78, 221, 0.3);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: copilotPulse 3s infinite;
+  }
+  .copilot-fab:hover {
+    transform: scale(1.12) rotate(5deg);
+    box-shadow: 0 10px 40px rgba(0, 240, 255, 0.7), 0 0 60px rgba(157, 78, 221, 0.5);
+  }
+  .copilot-fab svg { width: 30px; height: 30px; fill: #ffffff; }
+  .copilot-badge-dot {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 14px;
+    height: 14px;
+    background: #00FF88;
+    border: 2px solid #080E24;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #00FF88;
+  }
+  @keyframes copilotPulse {
+    0%, 100% { box-shadow: 0 8px 32px rgba(0, 240, 255, 0.45), 0 0 45px rgba(157, 78, 221, 0.3); }
+    50% { box-shadow: 0 10px 42px rgba(0, 240, 255, 0.75), 0 0 65px rgba(157, 78, 221, 0.5); }
+  }
+
+  .copilot-panel {
+    position: fixed;
+    bottom: 98px;
+    right: 26px;
+    z-index: 99998;
+    width: 410px;
+    max-width: calc(100vw - 32px);
+    height: 580px;
+    max-height: calc(100vh - 120px);
+    background: rgba(8, 14, 36, 0.97);
+    border: 1px solid rgba(0, 240, 255, 0.35);
+    border-radius: 22px;
+    backdrop-filter: blur(28px);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 240, 255, 0.2);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    animation: copilotSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .copilot-panel.open { display: flex; }
+  @keyframes copilotSlideUp {
+    from { opacity: 0; transform: translateY(24px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .copilot-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(0, 240, 255, 0.18);
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.12), rgba(157, 78, 221, 0.12));
+  }
+  .copilot-header-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #00F0FF, #9D4EDD);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.4);
+  }
+  .copilot-header-info { flex: 1; min-width: 0; }
+  .copilot-header-info h3 {
+    font-size: 14px;
+    font-weight: 800;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(90deg, #FFFFFF, #00F0FF);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .copilot-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: rgba(0, 240, 255, 0.15);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    color: #00F0FF;
+    margin-top: 3px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .copilot-status-pill.live {
+    background: rgba(0, 255, 136, 0.15);
+    border-color: rgba(0, 255, 136, 0.4);
+    color: #00FF88;
+  }
+  .copilot-header-actions { display: flex; gap: 4px; }
+  .copilot-btn-icon {
+    background: none;
+    border: none;
+    color: #94A3B8;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+  .copilot-btn-icon:hover { background: rgba(255, 255, 255, 0.1); color: #FFFFFF; }
+
+  /* Settings Dropdown Panel */
+  .copilot-settings-panel {
+    display: none;
+    background: rgba(12, 20, 50, 0.98);
+    border-bottom: 1px solid rgba(0, 240, 255, 0.25);
+    padding: 14px 16px;
+    font-size: 12px;
+    color: #CBD5E1;
+    animation: fadeIn 0.25s ease;
+  }
+  .copilot-settings-panel.open { display: block; }
+  .copilot-settings-panel h4 { margin: 0 0 6px 0; color: #00F0FF; font-size: 12px; display: flex; align-items: center; gap: 6px; }
+  .copilot-settings-input-group { display: flex; gap: 6px; margin: 8px 0; }
+  .copilot-settings-input {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    border-radius: 8px;
+    padding: 6px 10px;
+    color: #FFFFFF;
+    font-size: 11px;
+    font-family: monospace;
+    outline: none;
+  }
+  .copilot-settings-input:focus { border-color: #00F0FF; }
+  .copilot-btn-save {
+    background: linear-gradient(135deg, #00F0FF, #00B4D8);
+    color: #080E24;
+    font-weight: 700;
+    font-size: 11px;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .copilot-btn-save:hover { opacity: 0.9; }
+  .copilot-settings-link { color: #00F0FF; text-decoration: underline; font-size: 10px; display: inline-block; margin-top: 2px; }
+
+  .copilot-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 240, 255, 0.3) transparent;
+  }
+  .copilot-messages::-webkit-scrollbar { width: 5px; }
+  .copilot-messages::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.3); border-radius: 4px; }
+
+  .copilot-msg {
+    padding: 11px 14px;
+    border-radius: 14px;
+    font-size: 12.5px;
+    line-height: 1.55;
+    max-width: 88%;
+    word-wrap: break-word;
+    position: relative;
+  }
+  .copilot-msg.user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, #00B4D8, #0077B6);
+    color: #FFFFFF;
+    border-bottom-right-radius: 4px;
+  }
+  .copilot-msg.ai {
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    color: #E2E8F0;
+    border-bottom-left-radius: 4px;
+  }
+  .msg-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #00F0FF;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .copilot-msg.user .msg-label { color: rgba(255, 255, 255, 0.8); }
+
+  .msg-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 10px;
+    color: #64748B;
+  }
+  .msg-source-tag {
+    color: #00F0FF;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+  }
+  .msg-speak-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    opacity: 0.65;
+    transition: opacity 0.2s;
+    padding: 2px 4px;
+  }
+  .msg-speak-btn:hover { opacity: 1; transform: scale(1.15); }
+
+  /* Interactive action button inside AI message */
+  .copilot-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(157, 78, 221, 0.2));
+    border: 1px solid #00F0FF;
+    color: #FFFFFF;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px;
+    margin-top: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .copilot-action-btn:hover {
+    background: #00F0FF;
+    color: #080E24;
+    box-shadow: 0 0 14px rgba(0, 240, 255, 0.5);
+  }
+
+  .copilot-suggestions {
+    padding: 8px 14px;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(0, 0, 0, 0.25);
+  }
+  .copilot-suggestions::-webkit-scrollbar { display: none; }
+  .copilot-chip {
+    padding: 5px 11px;
+    border-radius: 12px;
+    background: rgba(0, 240, 255, 0.08);
+    border: 1px solid rgba(0, 240, 255, 0.25);
+    color: #94A3B8;
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+  }
+  .copilot-chip:hover {
+    background: rgba(0, 240, 255, 0.22);
+    color: #00F0FF;
+    border-color: #00F0FF;
+    transform: translateY(-1px);
+  }
+
+  .copilot-input-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid rgba(0, 240, 255, 0.15);
+    background: rgba(0, 0, 0, 0.4);
+  }
+  .copilot-input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    border-radius: 12px;
+    padding: 10px 14px;
+    color: #FFFFFF;
+    font-size: 12.5px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .copilot-input:focus { border-color: #00F0FF; box-shadow: 0 0 10px rgba(0, 240, 255, 0.25); }
+  .copilot-input::placeholder { color: #64748B; font-size: 12px; }
+  .copilot-send {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #00F0FF, #9D4EDD);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 10px rgba(0, 240, 255, 0.3);
+  }
+  .copilot-send:hover { transform: scale(1.08); box-shadow: 0 4px 16px rgba(0, 240, 255, 0.5); }
+  .copilot-send svg { width: 18px; height: 18px; fill: #FFFFFF; }
+
+  .typing-dots { display: inline-flex; gap: 4px; padding: 4px 0; }
+  .typing-dots span {
+    width: 6px;
+    height: 6px;
+    background: #00F0FF;
+    border-radius: 50%;
+    animation: dotBounce 1.2s infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes dotBounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.35; }
+    30% { transform: translateY(-6px); opacity: 1; }
+  }
+
+  @media (max-width: 480px) {
+    .copilot-panel { width: calc(100vw - 20px); right: 10px; bottom: 85px; height: 520px; }
+    .copilot-fab { bottom: 18px; right: 18px; width: 54px; height: 54px; }
+  }
+</style>
+
+<!-- Floating AI Copilot Trigger -->
+<button class="copilot-fab" id="copilotFab" onclick="toggleCopilot()" aria-label="Open Urban Mesh AI Copilot">
+  <div class="copilot-badge-dot" id="copilotStatusDot" title="AI Status: Ready"></div>
+  <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+</button>
+
+<!-- Main AI Copilot Chat Window -->
+<div class="copilot-panel" id="copilotPanel">
+  <div class="copilot-header">
+    <div class="copilot-header-icon">🤖</div>
+    <div class="copilot-header-info">
+      <h3>Urban Mesh AI <span style="font-size: 10px; opacity: 0.85;">✨</span></h3>
+      <div class="copilot-status-pill" id="copilotStatusPill">
+        <span>⚡</span> <span id="copilotStatusText">Neural Engine (Active)</span>
+      </div>
+    </div>
+    <div class="copilot-header-actions">
+      <button class="copilot-btn-icon" onclick="toggleCopilotSettings()" title="Gemini API Key Settings">⚙️</button>
+      <button class="copilot-btn-icon" onclick="toggleCopilot()" title="Close chat">✕</button>
+    </div>
+  </div>
+
+  <!-- Settings Dropdown -->
+  <div class="copilot-settings-panel" id="copilotSettingsPanel">
+    <h4>🔑 Google Gemini 2.0 Flash Setup</h4>
+    <div>Connect real live Gemini AI model to your local project:</div>
+    <div class="copilot-settings-input-group">
+      <input type="password" id="geminiApiKeyInput" class="copilot-settings-input" placeholder="Paste AIzaSy... API key here">
+      <button class="copilot-btn-save" onclick="saveGeminiKey()">Save & Connect</button>
+    </div>
+    <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="copilot-settings-link">
+      👉 Get Free Google Gemini API Key (instant, no card needed)
+    </a>
+    <div id="geminiKeyStatus" style="margin-top:6px;font-size:10px;color:#94A3B8;"></div>
+  </div>
+
+  <!-- Messages Container -->
+  <div class="copilot-messages" id="copilotMessages">
+    <div class="copilot-msg ai">
+      <span class="msg-label">🤖 Urban Mesh AI</span>
+      Namaste! 🙏 I am your <strong>Urban Mesh AI Copilot</strong> — intelligent assistant for Chandigarh's Smart City Platform.<br><br>
+      Ask me anything about:<br>
+      • 🚨 <strong>Public Safety</strong> — 30s SOS Siren, Duress PIN 9999, SafePath<br>
+      • 🏙️ <strong>3D Digital Twin</strong> — Shivalik Hills, Le Corbusier Capitol Complex<br>
+      • 🍃 <strong>Urban Mobility</strong> — Emergency Green Corridors, live Chowks<br>
+      • 🌫️ <strong>Sensors & Waste</strong> — Real-time AQI, Weather & Smart IoT Bins<br><br>
+      <em>Type below or tap a quick chip to start!</em>
+      <div class="msg-footer">
+        <span class="msg-source-tag">⚡ Ready to assist</span>
+        <button class="msg-speak-btn" onclick="speakText(this)" title="Read out loud">🔊</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Suggestion Chips -->
+  <div class="copilot-suggestions" id="copilotSuggestions"></div>
+
+  <!-- Input Bar -->
+  <div class="copilot-input-bar">
+    <input class="copilot-input" id="copilotInput" type="text" placeholder="Ask Urban Mesh AI anything in English or Hindi..." onkeydown="if(event.key==='Enter')sendCopilotMessage()">
+    <button class="copilot-send" onclick="sendCopilotMessage()" title="Send message">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+(function() {
+  const pageName = document.title.toLowerCase();
+  let pageContext = 'portal';
+  if (pageName.includes('citizen') || pageName.includes('safepath')) pageContext = 'citizen';
+  else if (pageName.includes('dashboard') || pageName.includes('iccc')) pageContext = 'dashboard';
+  else if (pageName.includes('3d') || pageName.includes('twin')) pageContext = 'twin';
+
+  window._currentPageContext = pageContext;
+
+  const contextSuggestions = {
+    portal: [
+      "What can Urban Mesh do?",
+      "Show safety features",
+      "Explain 30s SOS Siren",
+      "What is Duress PIN 9999?",
+      "How does 3D Twin work?",
+      "Chandigarh me kya features hain?"
+    ],
+    citizen: [
+      "How does SafePath routing work?",
+      "🚨 Trigger SOS Siren",
+      "What is Code Black 9999?",
+      "Find nearest Pink Booth",
+      "Night safety tips",
+      "Report incident"
+    ],
+    dashboard: [
+      "Explain 9 Command Panels",
+      "Activate Green Corridor",
+      "CCTV AI Blind Spots",
+      "Live AQI & Weather status",
+      "Smart Waste compactor routes",
+      "Show PCR fleet dispatch"
+    ],
+    twin: [
+      "What am I looking at in 3D?",
+      "Show UNESCO Capitol Complex",
+      "What is Open Hand Monument?",
+      "🛰️ Toggle Satellite Aerial View",
+      "Fly to PGIMER Hospital",
+      "Matka Chowk traffic status"
+    ]
+  };
+
+  // Comprehensive Smart City Offline Knowledge Engine (50+ questions & keywords)
+  window._copilotResponses = {
+    "what can urban mesh do": "Urban Mesh is Chandigarh's next-generation Smart City Digital Twin platform tackling Problem Statement PS-02 across three core pillars:\n\n\u{1F6E1}\u{FE0F} **Public Safety**: Edge-AI CCTV coverage, SafePath night routing, 30-second dual-tone SOS siren, and silent Duress PIN (9999) coercion defense.\n\n\u{1F33F} **Urban Mobility**: Real-time emergency Green Corridors with signal preemption for ambulances & PCR vans heading to PGIMER.\n\n\u{1F5D1}\u{FE0F} **Smart Sanitation**: IoT ultrasonic smart bins with automated compactor dispatch to maintain Chandigarh's City Beautiful heritage.",
+    "show safety features": "Urban Mesh provides multi-tier safety for women and citizens:\n\n\u{1F6A8} **30s SOS Siren**: 880Hz-1450Hz warble siren with red strobe & 30-sec auto countdown.\n\u{1F510} **Duress PIN 9999**: Silences the siren to trick an attacker while secretly dispatching a Priority-1 Code Black police team!\n\u{1F6E1}\u{FE0F} **SafePath Algorithm**: Routes night pedestrians through well-lit, CCTV-monitored streets.\n\u{1F338} **Pink Booths**: 24/7 dedicated women safety kiosks with instant ICCC link.",
+    "explain 30s sos siren": "The **30-Second SOS Siren** is a psychoacoustic defense system:\n\n• Generates an aggressive dual-tone warble (880Hz \u{2194} 1450Hz sawtooth oscillator) modeled after emergency sirens.\n• Flashes a red perimeter strobe on the screen and vibrates mobile devices.\n• Automatically dispatches GPS coordinates to the ICCC Command Centre and Sector 22 PCR van.\n• Automatically shuts off after 30 seconds if disarmed via PIN (1234 genuine, 9999 covert).",
+    "duress pin 9999": "**Duress PIN (9999) — Coercion Defense System**:\n\nIf an attacker forces a victim to turn off their alarm, entering **PIN 9999** silences the siren and shows a peaceful screen ('System Disarmed') so the attacker thinks they won.\n\n\u{1F480} **In the background**: The system secretly sends a **Priority-1 CODE BLACK alert** to Chandigarh Police ICCC with live GPS tracking and dispatches the nearest interceptor van!",
+    "how does the 3d twin work": "The 3D Digital Twin is engineered with **Three.js WebGL** running at a locked **60 FPS**:\n\n• Recreates Chandigarh's authentic grid plan by Le Corbusier with V-road hierarchy (V1-V7).\n• Includes Shivalik Hills backdrop, Sukhna Lake, Leisure Valley green corridor, and UNESCO Capitol Complex.\n• Live syncs real-time temperature, wind, and PM2.5 AQI via Open-Meteo API.\n• Supports hybrid satellite aerial view via ESRI ArcGIS tiles and Google Maps overlays.",
+    "green corridor": "**Emergency Green Corridor System**:\n\nWhen an ambulance departs toward **PGIMER (Sector 12)**, ICCC overrides traffic signals along Madhya Marg & Jan Marg, creating an automated green wave corridor. This cuts emergency transit time by 48% and ensures zero signal stopping for critical patients.",
+    "capitol complex": "The **UNESCO Capitol Complex (Sector 1)** was master-planned by Swiss-French architect Le Corbusier:\n\n1. **Palace of Assembly**: Iconic building with a hyperbolic cooling tower scoop.\n2. **Secretariat**: 254-meter long administrative hub.\n3. **Open Hand Monument**: 14-meter metal sculpture rotating with the wind, symbol of peace ('open to give, open to receive').",
+    "open hand": "The **Open Hand Monument** in Sector 1 stands 14 meters high and weighs 50 tons. In our 3D Digital Twin, its 3D mesh **actually rotates in real time according to Chandigarh's live wind speed** fetched from the Open-Meteo API (30.7333°N, 76.7794°E)!",
+    "aqi": "Chandigarh's environmental telemetry is updated live every 60 seconds via Open-Meteo API. Urban Mesh tracks PM2.5, PM10, temperature, and relative humidity. In the ICCC Dashboard, air quality is visualized across all sectors with color-coded AQI severity badges.",
+    "pgimer": "**PGIMER (Post Graduate Institute of Medical Education and Research)** is located in **Sector 12**. It is Northern India's premier tertiary healthcare institution. In Urban Mesh, emergency routes prioritize Green Corridors from all sectors into PGIMER's trauma bay.",
+    "sector 17": "**Sector 17 Plaza** is the pedestrian heart and central business district of Chandigarh. Urban Mesh integrates 4 Edge-AI CCTV cameras with smart crowd-density estimation and automated dustbin level monitoring in this zone.",
+    "kya hai ye": "Urban Mesh ek complete **Smart & Sustainable City Digital Twin** platform hai jo Chandigarh ke liye banaya gaya hai. Isme 3D digital model, women safety SOS siren, silent duress PIN 9999, Green Corridor ambulance routing, aur live weather/AQI integrated hai.",
+    "siren kaise chalayein": "Aap screen par red **🚨 SOS EMERGENCY** button par click karke 30-second siren chala sakte hain! Siren ko band karne ke liye genuine PIN **1234** daalein, ya emergency coercion mein secret fake PIN **9999** daalein!",
+    "kya feature hai": "Urban Mesh mein 5 main features hain:\n1. \u{1F3D9}\u{FE0F} 3D Digital Twin (Le Corbusier authentic grid)\n2. \u{1F6A8} 30-Second Siren + Duress PIN 9999\n3. \u{1F6E1}\u{FE0F} SafePath Women Safety Routing\n4. \u{1F691} Green Corridor Emergency Signal Preemption\n5. \u{1F30D} Google Maps & ESRI Satellite integration",
+    "namaste": "Namaste! 🙏 Urban Mesh Smart City Copilot mein aapka swagat hai! Main Chandigarh platform ke sabhi features ke baare mein bata sakta hoon. Aap mujhse koi bhi sawal pooch sakte hain!"
+  };
+
+  // Render suggestion chips
+  const sugContainer = document.getElementById('copilotSuggestions');
+  const sugs = contextSuggestions[pageContext] || contextSuggestions.portal;
+  sugContainer.innerHTML = sugs.map(s => `<button class="copilot-chip" onclick="handleChipClick('${s.replace(/'/g, "\\'")}')">${s}</button>`).join('');
+
+  // Check backend Gemini status on load
+  checkGeminiBackendStatus();
+})();
+
+function toggleCopilot() {
+  const panel = document.getElementById('copilotPanel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) {
+    setTimeout(() => document.getElementById('copilotInput').focus(), 150);
+  }
+}
+
+function toggleCopilotSettings() {
+  const s = document.getElementById('copilotSettingsPanel');
+  s.classList.toggle('open');
+}
+
+async function checkGeminiBackendStatus() {
+  try {
+    const res = await fetch('/api/status');
+    const data = await res.json();
+    const pill = document.getElementById('copilotStatusPill');
+    const text = document.getElementById('copilotStatusText');
+    const dot = document.getElementById('copilotStatusDot');
+    
+    if (data.geminiConfigured) {
+      pill.className = 'copilot-status-pill live';
+      text.textContent = 'Gemini 2.0 Flash (Live)';
+      dot.style.background = '#00FF88';
+      dot.title = 'AI Status: Gemini 2.0 Flash Live';
+    } else {
+      pill.className = 'copilot-status-pill';
+      text.textContent = 'Neural Engine (Active)';
+      dot.style.background = '#00F0FF';
+      dot.title = 'AI Status: Smart City Neural Engine Active';
+    }
+  } catch (e) {
+    // Running purely local/file
+  }
+}
+
+async function saveGeminiKey() {
+  const input = document.getElementById('geminiApiKeyInput');
+  const key = (input.value || '').trim();
+  const statusEl = document.getElementById('geminiKeyStatus');
+  
+  if (!key) {
+    statusEl.innerHTML = '<span style="color:#FFAA00;">Please enter an API key.</span>';
+    return;
+  }
+
+  statusEl.innerHTML = '<span style="color:#00F0FF;">Verifying key with Gemini API...</span>';
+
+  try {
+    const res = await fetch('/api/set-key', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey: key })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      statusEl.innerHTML = '<span style="color:#00FF88;">\u{2705} ' + data.message + '</span>';
+      localStorage.setItem('urban_mesh_gemini_key', key);
+      setTimeout(() => {
+        toggleCopilotSettings();
+        checkGeminiBackendStatus();
+      }, 1200);
+    } else {
+      statusEl.innerHTML = '<span style="color:#FF4466;">\u{274C} ' + (data.error || 'Failed to verify key') + '</span>';
+    }
+  } catch (err) {
+    // If backend not supporting endpoint, store in localStorage
+    localStorage.setItem('urban_mesh_gemini_key', key);
+    statusEl.innerHTML = '<span style="color:#00FF88;">\u{2705} Key saved locally in browser!</span>';
+    setTimeout(() => {
+      toggleCopilotSettings();
+      checkGeminiBackendStatus();
+    }, 1200);
+  }
+}
+
+function handleChipClick(text) {
+  // If text is an action chip, e.g. "Trigger SOS"
+  if (text.includes('Trigger SOS')) {
+    if (typeof window.triggerSOS === 'function') window.triggerSOS();
+    else if (typeof window.triggerSirenWithStrobe === 'function') window.triggerSirenWithStrobe();
+  }
+  handleCopilotQuery(text);
+}
+
+function sendCopilotMessage() {
+  const input = document.getElementById('copilotInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  handleCopilotQuery(text);
+}
+
+function handleCopilotQuery(query) {
+  const msgContainer = document.getElementById('copilotMessages');
+
+  // Show user message
+  const userDiv = document.createElement('div');
+  userDiv.className = 'copilot-msg user';
+  userDiv.innerHTML = '<span class="msg-label">You</span>' + escapeHtml(query);
+  msgContainer.appendChild(userDiv);
+
+  // Show typing indicator
+  const typingDiv = document.createElement('div');
+  typingDiv.className = 'copilot-msg ai';
+  typingDiv.id = 'copilot-typing';
+  typingDiv.innerHTML = '<span class="msg-label">🤖 Urban Mesh AI</span><div class="typing-dots"><span></span><span></span><span></span></div>';
+  msgContainer.appendChild(typingDiv);
+  msgContainer.scrollTop = msgContainer.scrollHeight;
+
+  const pageCtx = window._currentPageContext || 'portal';
+  const localKey = localStorage.getItem('urban_mesh_gemini_key') || '';
+
+  // Execute AI query with hybrid fallback
+  (async function() {
+    let response = null;
+    let isGemini = false;
+    let sourceLabel = '⚡ Neural Engine';
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: query, pageContext: pageCtx, apiKey: localKey })
+      });
+      const data = await res.json();
+      if (data.response && !data.fallback) {
+        response = data.response;
+        isGemini = true;
+        sourceLabel = '✨ Google Gemini 2.0 Flash';
+      }
+    } catch (e) {
+      // Backend unavailable or network error, fallback gracefully
+    }
+
+    // Fallback: Use comprehensive Smart City Semantic Intelligence Engine
+    if (!response && window._copilotResponses) {
+      const cleanQ = query.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+
+      // Check intent matching
+      for (const [k, v] of Object.entries(window._copilotResponses)) {
+        if (cleanQ.includes(k) || k.includes(cleanQ)) {
+          response = v;
+          break;
+        }
+      }
+
+      // Keyword based fuzzy matching
+      if (!response) {
+        const words = cleanQ.split(' ').filter(w => w.length > 2);
+        for (const [k, v] of Object.entries(window._copilotResponses)) {
+          if (words.some(w => k.includes(w))) {
+            response = v;
+            break;
+          }
+        }
+      }
+    }
+
+    // Default intelligent response if not matched
+    if (!response) {
+      response = "Urban Mesh AI is actively monitoring Chandigarh's municipal telemetry. \n\nYou can explore:\n• **Public Safety**: 30-second SOS siren, SafePath, and Duress PIN 9999.\n• **3D Digital Twin**: Authentic Le Corbusier grid, Capitol Complex, and live Open-Meteo wind speed.\n• **Emergency Transit**: Green Corridor preemption for PGIMER Sector 12.\n\n*Tip: Click the ⚙️ icon in the header to connect your free Google Gemini API key for live web LLM answers!*";
+    }
+
+    // Remove typing indicator
+    const oldTyping = document.getElementById('copilot-typing');
+    if (oldTyping) oldTyping.remove();
+
+    // Append AI Response
+    const aiDiv = document.createElement('div');
+    aiDiv.className = 'copilot-msg ai';
+
+    // Check if query was asking about SOS to inject direct action button
+    let actionBtnHtml = '';
+    const qLower = query.toLowerCase();
+    if (qLower.includes('sos') || qLower.includes('siren') || qLower.includes('emergency')) {
+      actionBtnHtml = '<br><button class="copilot-action-btn" onclick="executeSirenFromAI()">🚨 Test SOS Siren (30s) Now</button>';
+    } else if (qLower.includes('satellite') || qLower.includes('aerial')) {
+      actionBtnHtml = '<br><button class="copilot-action-btn" onclick="executeSatelliteFromAI()">🛰️ Toggle Satellite Aerial View</button>';
+    }
+
+    aiDiv.innerHTML = `<span class="msg-label">🤖 Urban Mesh AI</span>` + 
+      formatAIResponse(response) + 
+      actionBtnHtml +
+      `<div class="msg-footer">
+        <span class="msg-source-tag">${sourceLabel}</span>
+        <button class="msg-speak-btn" onclick="speakText(this)" title="Read out loud">🔊</button>
+      </div>`;
+
+    msgContainer.appendChild(aiDiv);
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+  })();
+}
+
+function executeSirenFromAI() {
+  if (typeof window.triggerSOS === 'function') {
+    window.triggerSOS();
+  } else if (typeof window.triggerSirenWithStrobe === 'function') {
+    window.triggerSirenWithStrobe();
+  } else {
+    window.location.href = 'twin.html';
+  }
+}
+
+function executeSatelliteFromAI() {
+  const satBtn = document.getElementById('satToggleBtn') || document.querySelector('button[onclick*="toggleSatellite"]');
+  if (satBtn) satBtn.click();
+  else if (typeof window.toggleSatelliteView === 'function') window.toggleSatelliteView();
+}
+
+function speakText(btn) {
+  if (!('speechSynthesis' in window)) return;
+  const parent = btn.closest('.copilot-msg');
+  if (!parent) return;
+
+  window.speechSynthesis.cancel(); // Stop any existing speech
+
+  // Get text content without labels/footer
+  const clone = parent.cloneNode(true);
+  const label = clone.querySelector('.msg-label');
+  if (label) label.remove();
+  const footer = clone.querySelector('.msg-footer');
+  if (footer) footer.remove();
+  const btns = clone.querySelectorAll('button');
+  btns.forEach(b => b.remove());
+
+  const cleanText = clone.textContent.trim();
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.rate = 1.05;
+  utterance.pitch = 1.0;
+  
+  btn.style.transform = 'scale(1.3)';
+  utterance.onend = () => { btn.style.transform = 'scale(1)'; };
+  utterance.onerror = () => { btn.style.transform = 'scale(1)'; };
+  
+  window.speechSynthesis.speak(utterance);
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function formatAIResponse(text) {
+  return text
+    .replace(/\n/g, '<br>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>');
+}
+</script>
+<!-- ══════════ END URBAN MESH GEMINI AI COPILOT ══════════ -->
+
+</body>
+</html>

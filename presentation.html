@@ -1,0 +1,2334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>URBANSYNC AI — 3D Hackathon Presentation Deck & Digital Twin</title>
+  <meta name="description" content="UrbanSync AI: Autonomous Civic Operations, Mobility Mesh & 3D Spatial Digital Twin. Code Yudh Hackathon, Chandigarh University.">
+  
+  <!-- Google Fonts: Space Grotesk, JetBrains Mono, Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Three.js & OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #050814;
+      --pure-white: #FFFFFF;
+      --text-sub: #E2E8F0;
+      --text-dim: #94A3B8;
+
+      /* Aesthetic Syntax Color Tokens */
+      --syn-cyan: #00F0FF;
+      --syn-cyan-glow: rgba(0, 240, 255, 0.45);
+      --syn-emerald: #00FF88;
+      --syn-emerald-glow: rgba(0, 255, 136, 0.4);
+      --syn-amber: #FFB703;
+      --syn-amber-glow: rgba(255, 183, 3, 0.45);
+      --syn-purple: #C084FC;
+      --syn-purple-glow: rgba(192, 132, 252, 0.4);
+      --syn-coral: #FF5E7E;
+
+      /* 80% Transparent Glassmorphic Panels (NO opaque gap) */
+      --glass-bg: rgba(8, 14, 28, 0.42);
+      --glass-border: rgba(255, 255, 255, 0.16);
+      --glass-border-cyan: rgba(0, 240, 255, 0.38);
+
+      --font-heading: 'Space Grotesk', -apple-system, sans-serif;
+      --font-body: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-dark);
+      color: var(--pure-white);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+
+    /* ==========================================================================
+       DYNAMIC BACKGROUND RELATIVE VIDEO STREAM MANAGER (80%+ CLEAR VISIBILITY)
+       ========================================================================== */
+    .video-background-manager {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .video-slide-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+      /* High brightness and contrast so background video is 80%+ visible */
+      filter: brightness(0.85) contrast(1.12) saturate(1.18);
+    }
+
+    .video-slide-layer.active {
+      opacity: 1;
+    }
+
+    .video-slide-layer iframe,
+    .video-slide-layer video,
+    .video-slide-layer canvas {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      min-width: 100%;
+      min-height: 100%;
+      width: auto;
+      height: auto;
+      transform: translate(-50%, -50%) scale(1.05);
+      object-fit: cover;
+      pointer-events: none;
+      border: none;
+    }
+
+    /* Subtle cinematic gradient vignette so text is always 100% legible without obscuring the video */
+    .cinematic-vignette {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 50%, rgba(5, 8, 20, 0.15) 30%, rgba(5, 8, 20, 0.65) 100%);
+    }
+
+    /* 3D WebGL Digital Twin City Canvas */
+    #webgl-city-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0.45;
+      mix-blend-mode: screen;
+      transition: opacity 0.5s ease;
+    }
+
+    #webgl-city-canvas.interactive-orbit {
+      pointer-events: auto !important;
+      cursor: grab;
+      z-index: 200;
+      opacity: 1;
+    }
+    #webgl-city-canvas.interactive-orbit:active {
+      cursor: grabbing;
+    }
+
+    /* ==========================================================================
+       TOP HUD BAR & HACKATHON CONTROLS
+       ========================================================================== */
+    .hud-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 64px;
+      padding: 0 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+      background: linear-gradient(180deg, rgba(5, 8, 20, 0.88) 0%, rgba(5, 8, 20, 0) 100%);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .hud-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+    }
+
+    .brand-pulse-logo {
+      width: 32px;
+      height: 32px;
+      background: rgba(0, 240, 255, 0.15);
+      border: 1.5px solid var(--syn-cyan);
+      box-shadow: 0 0 16px var(--syn-cyan-glow);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: rotate(45deg);
+    }
+    .brand-pulse-logo-inner {
+      width: 12px;
+      height: 12px;
+      background: var(--syn-cyan);
+      box-shadow: 0 0 8px #fff;
+      border-radius: 2px;
+    }
+
+    .brand-meta {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title-text {
+      font-family: var(--font-heading);
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      color: var(--pure-white);
+    }
+    .brand-title-text span {
+      color: var(--syn-cyan);
+      text-shadow: 0 0 12px var(--syn-cyan-glow);
+    }
+
+    .brand-sub-badge {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--syn-amber);
+      font-weight: 600;
+      letter-spacing: 0.06em;
+    }
+
+    .hud-center-pill {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .live-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 14px;
+      background: rgba(0, 255, 136, 0.12);
+      border: 1px solid rgba(0, 255, 136, 0.35);
+      border-radius: 24px;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--syn-emerald);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .live-status-pill .dot {
+      width: 7px;
+      height: 7px;
+      background: var(--syn-emerald);
+      box-shadow: 0 0 8px var(--syn-emerald);
+      border-radius: 50%;
+      animation: pulseGreen 1.6s infinite ease-in-out;
+    }
+    @keyframes pulseGreen {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.5; }
+    }
+
+    .slide-counter-badge {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      background: rgba(0, 0, 0, 0.5);
+      padding: 5px 14px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+    }
+    .slide-counter-badge strong {
+      color: var(--pure-white);
+      font-size: 0.95rem;
+    }
+
+    .hud-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hud-action-btn {
+      background: rgba(10, 16, 32, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: var(--text-sub);
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(8px);
+    }
+    .hud-action-btn:hover {
+      background: rgba(0, 240, 255, 0.18);
+      border-color: var(--syn-cyan);
+      color: #fff;
+      box-shadow: 0 0 15px var(--syn-cyan-glow);
+      transform: translateY(-1px);
+    }
+    .hud-action-btn.active {
+      background: var(--syn-cyan);
+      color: #050814;
+      border-color: var(--syn-cyan);
+      font-weight: 800;
+      box-shadow: 0 0 20px var(--syn-cyan-glow);
+    }
+    .hud-action-btn.pdf-btn {
+      border-color: var(--syn-amber);
+      color: var(--syn-amber);
+    }
+    .hud-action-btn.pdf-btn:hover {
+      background: rgba(255, 183, 3, 0.25);
+      color: #fff;
+      box-shadow: 0 0 15px var(--syn-amber-glow);
+    }
+
+    /* ==========================================================================
+       SLIDE VIEWPORT & FLOATING GLASS OVERLAYS (80% VIDEO VISIBILITY)
+       ========================================================================== */
+    .slides-container {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      perspective: 1600px;
+      overflow: hidden;
+    }
+
+    .slide-section {
+      position: absolute;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 82px 48px 84px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translate3d(0, 40px, -100px) scale(0.96);
+      transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+                  visibility 0.75s;
+      pointer-events: none;
+    }
+
+    .slide-section.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translate3d(0, 0, 0) scale(1);
+      pointer-events: auto;
+    }
+
+    .slide-section.prev {
+      opacity: 0;
+      visibility: hidden;
+      transform: translate3d(0, -40px, -100px) scale(0.96);
+    }
+
+    /* ==========================================================================
+       BIG CENTERED TITLE & CENTERED HEADER COMPONENT
+       ========================================================================== */
+    .slide-header-centered {
+      width: 100%;
+      max-width: 1200px;
+      text-align: center;
+      margin-bottom: 22px;
+      position: relative;
+      z-index: 5;
+    }
+
+    .slide-category-pill {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--syn-cyan);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      padding: 4px 16px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+      backdrop-filter: blur(8px);
+    }
+
+    .slide-big-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2.4rem, 4.4vw, 3.8rem);
+      font-weight: 900;
+      letter-spacing: -0.025em;
+      line-height: 1.12;
+      color: var(--pure-white);
+      text-align: center;
+      text-shadow: 0 2px 20px rgba(0, 0, 0, 0.95), 0 0 35px rgba(0, 240, 255, 0.25);
+      margin-bottom: 8px;
+    }
+
+    .slide-sub-title-centered {
+      font-size: clamp(1rem, 1.4vw, 1.25rem);
+      color: var(--text-sub);
+      font-weight: 500;
+      text-align: center;
+      max-width: 980px;
+      margin: 0 auto;
+      line-height: 1.5;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.9);
+    }
+    .slide-sub-title-centered strong {
+      color: var(--syn-cyan);
+    }
+
+    /* Relative Video Active Indicator Pill */
+    .relative-video-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      padding: 3px 12px;
+      border-radius: 14px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: var(--syn-amber);
+    }
+    .relative-video-tag .video-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--syn-coral);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--syn-coral);
+      animation: pulseAlert 1.2s infinite;
+    }
+    @keyframes pulseAlert {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.3); }
+    }
+
+    /* ==========================================================================
+       CONTENT LAYOUTS (80% TRANSPARENT GLASS CARDS - CLEAR VIDEO VIEW)
+       ========================================================================== */
+    .slide-content-area {
+      width: 100%;
+      max-width: 1300px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      z-index: 5;
+    }
+
+    /* 2-Column Split: Text Syntax Cards + Interactive Image */
+    .split-grid-layout {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 28px;
+      align-items: center;
+      height: 100%;
+    }
+
+    .syntax-cards-col {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Ultra-sleek Semi-Transparent Glass Card (Video clearly visible through) */
+    .syntax-glass-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-left: 4px solid var(--syn-cyan);
+      border-radius: 12px;
+      padding: 18px 24px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      transition: all 0.3s cubic-bezier(0.2, 0, 0.2, 1);
+    }
+
+    .syntax-glass-card:hover {
+      background: rgba(10, 18, 38, 0.55);
+      border-color: var(--syn-cyan);
+      transform: translateX(6px) translateY(-2px);
+      box-shadow: 0 15px 40px rgba(0, 240, 255, 0.2);
+    }
+
+    .syntax-card-tag {
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--syn-cyan);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      display: block;
+      text-shadow: 0 0 10px var(--syn-cyan-glow);
+    }
+
+    .syntax-card-title {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--pure-white);
+      margin-bottom: 6px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+    }
+
+    .syntax-card-body {
+      font-size: 0.96rem;
+      color: var(--text-sub);
+      line-height: 1.6;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+    }
+
+    /* Interactive Image Container with Wikimedia citation */
+    .image-preview-frame {
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1.5px solid rgba(0, 240, 255, 0.4);
+      box-shadow: 0 15px 45px rgba(0, 0, 0, 0.6), 0 0 25px rgba(0, 240, 255, 0.2);
+      background: rgba(8, 14, 28, 0.35);
+      backdrop-filter: blur(6px);
+      height: 380px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.4s ease;
+    }
+    .image-preview-frame:hover {
+      transform: scale(1.02);
+      border-color: var(--syn-cyan);
+      box-shadow: 0 20px 50px rgba(0, 240, 255, 0.3);
+    }
+
+    .image-preview-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .image-citation-tag {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(5, 8, 18, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(6px);
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-dim);
+    }
+
+    /* ==========================================================================
+       SLIDE 1: TITLE SLIDE (CHANDIGARH UNIVERSITY CAMPUS AERIAL HERO)
+       ========================================================================== */
+    .hero-title-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      height: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .cu-branding-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 183, 3, 0.12);
+      border: 1.5px solid var(--syn-amber);
+      box-shadow: 0 0 25px var(--syn-amber-glow);
+      padding: 8px 24px;
+      border-radius: 30px;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--syn-amber);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      backdrop-filter: blur(8px);
+    }
+
+    .hero-grand-title {
+      font-family: var(--font-heading);
+      font-size: clamp(3.6rem, 7vw, 6.2rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-bottom: 16px;
+      color: var(--pure-white);
+      text-shadow: 0 4px 30px rgba(0, 0, 0, 0.9), 0 0 50px rgba(0, 240, 255, 0.5);
+    }
+
+    .hero-grand-subtitle {
+      font-size: clamp(1.2rem, 2.2vw, 1.8rem);
+      color: var(--syn-cyan);
+      font-weight: 600;
+      line-height: 1.45;
+      margin-bottom: 32px;
+      max-width: 950px;
+      text-shadow: 0 2px 16px rgba(0, 0, 0, 0.9);
+    }
+
+    .hero-meta-glass {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 16px 36px;
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      font-family: var(--font-mono);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .hero-meta-item strong {
+      color: var(--syn-amber);
+      font-size: 1.1rem;
+    }
+
+    /* ==========================================================================
+       SLIDE 2: TEAM INTRO GRID
+       ========================================================================== */
+    .team-4-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 22px;
+    }
+
+    .team-glass-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 24px 28px;
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      transition: all 0.3s ease;
+    }
+
+    .team-glass-card:hover {
+      background: rgba(12, 20, 42, 0.6);
+      border-color: var(--syn-cyan);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 35px rgba(0, 240, 255, 0.2);
+    }
+
+    .team-avatar-box {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(192, 132, 252, 0.25));
+      border: 1.5px solid var(--syn-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #fff;
+      box-shadow: 0 0 18px var(--syn-cyan-glow);
+      flex-shrink: 0;
+    }
+
+    .team-details {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .team-person-name {
+      font-family: var(--font-heading);
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--pure-white);
+    }
+
+    .team-person-role {
+      font-family: var(--font-mono);
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: var(--syn-cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+
+    .team-person-desc {
+      font-size: 0.92rem;
+      color: var(--text-sub);
+      line-height: 1.5;
+    }
+
+    /* ==========================================================================
+       SLIDE 6: 5 CORE FEATURES (5-COLUMN GLASS GRID)
+       ========================================================================== */
+    .features-5-columns {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      align-items: stretch;
+      height: 100%;
+    }
+
+    .feature-card-glass {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 24px 18px;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      position: relative;
+      transition: all 0.35s ease;
+    }
+
+    .feature-card-glass::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--syn-cyan), var(--syn-emerald));
+      border-radius: 14px 14px 0 0;
+      opacity: 0.7;
+    }
+
+    .feature-card-glass:hover {
+      background: rgba(12, 20, 42, 0.65);
+      border-color: var(--syn-cyan);
+      transform: translateY(-8px);
+      box-shadow: 0 15px 40px rgba(0, 240, 255, 0.25);
+    }
+
+    .feature-num-big {
+      font-family: var(--font-heading);
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: rgba(255, 255, 255, 0.3);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .feature-card-glass:hover .feature-num-big {
+      color: var(--syn-cyan);
+      text-shadow: 0 0 15px var(--syn-cyan-glow);
+    }
+
+    .feature-tag-mono {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--syn-emerald);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .feature-title-bold {
+      font-family: var(--font-heading);
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--pure-white);
+      margin-bottom: 10px;
+      line-height: 1.25;
+    }
+
+    .feature-desc-text {
+      font-size: 0.88rem;
+      color: var(--text-sub);
+      line-height: 1.55;
+    }
+
+    /* ==========================================================================
+       SLIDE 7: ARCHITECTURE PIPELINE
+       ========================================================================== */
+    .arch-flow-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .arch-engine-4-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .arch-node-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 22px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      backdrop-filter: blur(8px);
+      transition: all 0.3s ease;
+    }
+    .arch-node-card:hover {
+      border-color: var(--syn-cyan);
+      transform: translateY(-4px);
+      box-shadow: 0 10px 30px rgba(0, 240, 255, 0.2);
+    }
+
+    .arch-node-icon {
+      font-size: 1.6rem;
+      margin-bottom: 4px;
+    }
+
+    .arch-node-title {
+      font-family: var(--font-heading);
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--pure-white);
+    }
+
+    .arch-node-desc {
+      font-size: 0.86rem;
+      color: var(--text-sub);
+      line-height: 1.5;
+    }
+    .arch-node-desc strong {
+      color: var(--syn-cyan);
+    }
+
+    .arch-beneficiary-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .beneficiary-pill {
+      background: rgba(0, 255, 136, 0.12);
+      border: 1px solid rgba(0, 255, 136, 0.3);
+      border-radius: 10px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      backdrop-filter: blur(8px);
+    }
+    .beneficiary-role {
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--syn-emerald);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .beneficiary-text {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--pure-white);
+    }
+
+    /* ==========================================================================
+       SLIDE 8: TECH STACK (5 PILLARS)
+       ========================================================================== */
+    .stack-5-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .stack-glass-pillar {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(8px);
+      transition: all 0.3s ease;
+    }
+    .stack-glass-pillar:hover {
+      border-color: var(--syn-purple);
+      transform: translateY(-4px);
+      box-shadow: 0 10px 30px rgba(192, 132, 252, 0.25);
+    }
+
+    .stack-cat-tag {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--syn-amber);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .stack-name-bold {
+      font-family: var(--font-heading);
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--pure-white);
+      margin-bottom: 10px;
+    }
+
+    .stack-detail-text {
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      line-height: 1.5;
+    }
+
+    .stack-integration-glass {
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      border-radius: 10px;
+      padding: 16px 24px;
+      font-size: 0.95rem;
+      color: var(--pure-white);
+      line-height: 1.55;
+      backdrop-filter: blur(8px);
+      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
+    }
+    .stack-integration-glass strong {
+      color: var(--syn-cyan);
+      font-family: var(--font-mono);
+    }
+
+    /* ==========================================================================
+       SLIDE 9: ROADMAP & FEASIBILITY
+       ========================================================================== */
+    .roadmap-2-col {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 28px;
+    }
+
+    .roadmap-glass-box {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 26px 30px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .roadmap-box-title {
+      font-family: var(--font-heading);
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--pure-white);
+      margin-bottom: 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      padding-bottom: 10px;
+    }
+
+    .milestone-item-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 14px;
+      font-size: 1.05rem;
+      color: var(--pure-white);
+    }
+
+    .milestone-badge-circle {
+      width: 32px;
+      height: 32px;
+      background: rgba(0, 240, 255, 0.15);
+      border: 1.5px solid var(--syn-cyan);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--syn-cyan);
+      flex-shrink: 0;
+    }
+
+    .challenge-bullet-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    .challenge-bullet-list li {
+      font-size: 1rem;
+      color: var(--text-sub);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .challenge-bullet-list li::before {
+      content: '▲';
+      color: var(--syn-amber);
+      font-size: 0.75rem;
+    }
+
+    .strategy-glass-banner {
+      margin-top: auto;
+      background: rgba(0, 255, 136, 0.12);
+      border-left: 4px solid var(--syn-emerald);
+      padding: 16px 20px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: var(--pure-white);
+      line-height: 1.5;
+    }
+    .strategy-glass-banner strong {
+      color: var(--syn-emerald);
+      font-family: var(--font-mono);
+    }
+
+    /* ==========================================================================
+       SLIDE 10: IMPACT (AMBULANCE RELATIVE VIDEO & METRICS)
+       ========================================================================== */
+    .impact-6-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .impact-card-glass {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      transition: all 0.3s ease;
+    }
+    .impact-card-glass:hover {
+      border-color: var(--syn-emerald);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 35px rgba(0, 255, 136, 0.25);
+    }
+
+    .impact-category-tag {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--syn-emerald);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .impact-val-highlight {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--pure-white);
+      line-height: 1.2;
+    }
+
+    .impact-desc-sub {
+      font-size: 0.88rem;
+      color: var(--text-sub);
+      line-height: 1.5;
+    }
+
+    /* ==========================================================================
+       BOTTOM FLOATING NAVIGATION DOCK
+       ========================================================================== */
+    .hud-bottom-dock {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(5, 8, 20, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 36px;
+      padding: 8px 20px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7), 0 0 25px rgba(0, 240, 255, 0.15);
+    }
+
+    .nav-arrow-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: all 0.2s ease;
+    }
+    .nav-arrow-btn:hover {
+      background: var(--syn-cyan);
+      color: #050814;
+      border-color: var(--syn-cyan);
+      box-shadow: 0 0 15px var(--syn-cyan-glow);
+    }
+
+    .dock-thumbnails {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dock-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.25);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      position: relative;
+    }
+    .dock-dot:hover {
+      background: var(--syn-cyan);
+      transform: scale(1.3);
+    }
+    .dock-dot.active {
+      width: 32px;
+      border-radius: 10px;
+      background: var(--syn-cyan);
+      box-shadow: 0 0 15px var(--syn-cyan-glow);
+    }
+
+    .dock-tooltip {
+      position: absolute;
+      bottom: calc(100% + 12px);
+      left: 50%;
+      transform: translateX(-50%) translateY(6px);
+      background: rgba(5, 8, 20, 0.95);
+      border: 1px solid var(--syn-cyan);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 5px 12px;
+      border-radius: 6px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+    }
+    .dock-dot:hover .dock-tooltip {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Print / PDF Styling */
+    @media print {
+      @page { size: 16in 9in; margin: 0; }
+      html, body { overflow: visible !important; background: #050814 !important; }
+      #webgl-city-canvas, .video-background-manager, .hud-header, .hud-bottom-dock, .cinematic-vignette { display: none !important; }
+      .slides-container { position: static !important; perspective: none !important; }
+      .slide-section { position: relative !important; width: 16in !important; height: 9in !important; opacity: 1 !important; visibility: visible !important; transform: none !important; page-break-after: always !important; padding: 40px !important; }
+      .syntax-glass-card, .roadmap-glass-box, .impact-card-glass { background: #080E1C !important; border: 1.5px solid #00F0FF !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Dynamic Relative Background Video Layers (80%+ Visible) -->
+  <div class="video-background-manager" id="videoBgManager">
+    <!-- Slide 1: Chandigarh University (CU) Punjab Campus Aerial Video -->
+    <div class="video-slide-layer active" id="v-layer-1">
+      <canvas id="proc-video-1"></canvas>
+    </div>
+
+    <!-- Slide 2: High-Tech Software Engineering & AI Lab Video -->
+    <div class="video-slide-layer" id="v-layer-2">
+      <canvas id="proc-video-2"></canvas>
+    </div>
+
+    <!-- Slide 3: Real Urban Traffic Congestion & City Gridlock Video -->
+    <div class="video-slide-layer" id="v-layer-3">
+      <canvas id="proc-video-3"></canvas>
+    </div>
+
+    <!-- Slide 4: Urban CCTV Surveillance & Street Hardware Traps Video -->
+    <div class="video-slide-layer" id="v-layer-4">
+      <canvas id="proc-video-4"></canvas>
+    </div>
+
+    <!-- Slide 5: Municipal Waste Management & Clean City Logistics Video -->
+    <div class="video-slide-layer" id="v-layer-5">
+      <canvas id="proc-video-5"></canvas>
+    </div>
+
+    <!-- Slide 6: Real-Time AI Computer Vision (YOLOv8) & 3D Lidar Scanning Video -->
+    <div class="video-slide-layer" id="v-layer-6">
+      <canvas id="proc-video-6"></canvas>
+    </div>
+
+    <!-- Slide 7: High-Velocity Cloud Server & Event-Driven Pub/Sub Video -->
+    <div class="video-slide-layer" id="v-layer-7">
+      <canvas id="proc-video-7"></canvas>
+    </div>
+
+    <!-- Slide 8: Next-Gen Code Architecture & High-Speed Highway Video -->
+    <div class="video-slide-layer" id="v-layer-8">
+      <canvas id="proc-video-8"></canvas>
+    </div>
+
+    <!-- Slide 9: Docker Microservices Container Fabric & Sync Engine Video -->
+    <div class="video-slide-layer" id="v-layer-9">
+      <canvas id="proc-video-9"></canvas>
+    </div>
+
+    <!-- Slide 10: REAL AMBULANCE WITH SIRENS RACING THROUGH EMERGENCY CORRIDOR VIDEO -->
+    <div class="video-slide-layer" id="v-layer-10">
+      <canvas id="proc-video-10"></canvas>
+    </div>
+  </div>
+
+  <!-- Real-time 3D Urban City Canvas -->
+  <canvas id="webgl-city-canvas"></canvas>
+
+  <!-- Cinematic Subtle Vignette for 100% Text Readability over Video -->
+  <div class="cinematic-vignette"></div>
+
+  <!-- Top HUD Header -->
+  <header class="hud-header">
+    <a href="index.html" class="hud-brand" title="Return to UrbanSync Platform">
+      <div class="brand-pulse-logo">
+        <div class="brand-pulse-logo-inner"></div>
+      </div>
+      <div class="brand-meta">
+        <div class="brand-title-text">URBANSYNC<span> AI</span></div>
+        <div class="brand-sub-badge">CHANDIGARH UNIVERSITY · CODE YUDH 2026</div>
+      </div>
+    </a>
+
+    <div class="hud-center-pill">
+      <div class="live-status-pill">
+        <span class="dot"></span>
+        <span>CLEAR 80% VIDEO STREAM · 3D DIGITAL TWIN</span>
+      </div>
+      <div class="slide-counter-badge">
+        SLIDE <strong id="currentSlideNum">01</strong> / 10
+      </div>
+    </div>
+
+    <div class="hud-actions">
+      <button class="hud-action-btn" id="btnOrbitMode" title="Explore 3D City with Mouse">
+        <span>🌐 3D Free-Fly</span>
+      </button>
+      <button class="hud-action-btn" id="btnAutoPlay" title="Auto-Play Presentation">
+        <span>▶ Auto Play</span>
+      </button>
+      <button class="hud-action-btn" id="btnAudioToggle" title="Toggle Futuristic Audio">
+        <span>🔇 Sound</span>
+      </button>
+      <button class="hud-action-btn pdf-btn" id="btnPrintPdf" title="Export High-Res Presentation PDF">
+        <span>📄 Export PDF</span>
+      </button>
+      <button class="hud-action-btn" id="btnFullscreen" title="Fullscreen Presentation">
+        <span>⛶ Fullscreen</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       MAIN PRESENTATION SLIDES VIEWPORT
+       ========================================================================== -->
+  <main class="slides-container" id="slidesViewport">
+
+    <!-- ==========================================================================
+         PAGE 1: TITLE SLIDE (CHANDIGARH UNIVERSITY AERIAL HERO)
+         ========================================================================== -->
+    <section class="slide-section active" data-slide="1">
+      <div class="hero-title-box">
+        <div class="cu-branding-badge">
+          <span>🏛️ CHANDIGARH UNIVERSITY, PUNJAB · CSE DEPT</span>
+        </div>
+
+        <h1 class="hero-grand-title">URBANSYNC AI</h1>
+        <p class="hero-grand-subtitle">Autonomous Civic Operations, Mobility Mesh & 3D Spatial Digital Twin</p>
+
+        <div class="hero-meta-glass">
+          <div class="hero-meta-item">Team: <strong>Ikarus</strong></div>
+          <div style="width: 1px; height: 28px; background: rgba(255,255,255,0.2);"></div>
+          <div class="hero-meta-item">Organized by Department of Computer Science & Engineering</div>
+          <div style="width: 1px; height: 28px; background: rgba(255,255,255,0.2);"></div>
+          <div class="hero-meta-item" style="color: var(--syn-emerald);">Photo: Shyamal L., CC BY-SA 3.0</div>
+        </div>
+
+        <div class="relative-video-tag" style="margin-top: 24px;">
+          <span class="video-dot"></span>
+          <span>BACKGROUND VIDEO: Chandigarh University Campus & City Aerial Stream (80% Clear)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         PAGE 2: TEAM INTRODUCTION & CONTRIBUTIONS
+         ========================================================================== -->
+    <section class="slide-section" data-slide="2">
+      <div class="slide-header-centered">
+        <div class="slide-category-pill">TEAM IKARUS</div>
+        <h2 class="slide-big-title">Team Introduction & Contributions</h2>
+        <p class="slide-sub-title-centered">Chandigarh University engineering squad bridging high-throughput APIs, edge computer vision, and spatial WebGL.</p>
+        <div class="relative-video-tag">
+          <span class="video-dot"></span>
+          <span>BACKGROUND VIDEO: Engineering Squad & Tech Innovation Matrix</span>
+        </div>
+      </div>
+
+      <div class="slide-content-area">
+        <div class="team-4-grid">
+          <!-- Member 1 -->
+          <div class="team-glass-card">
+            <div class="team-avatar-box">AK</div>
+            <div class="team-details">
+              <div class="team-person-name">Akshat Kaushik</div>
+              <div class="team-person-role">Full-stack & APIs</div>
+              <div class="team-person-desc">async API architecture, Redis integration, frontend state</div>
+            </div>
+          </div>
+
+          <!-- Member 2 -->
+          <div class="team-glass-card">
+            <div class="team-avatar-box">AT</div>
+            <div class="team-details">
+              <div class="team-person-name">Aaditya Tomar</div>
+              <div class="team-person-role">AI/ML & Computer Vision</div>
+              <div class="team-person-desc">YOLOv8 fine-tuning, homography, edge inference</div>
+            </div>
+          </div>
+
+          <!-- Member 3 -->
+          <div class="team-glass-card">
+            <div class="team-avatar-box">AY</div>
+            <div class="team-details">
+              <div class="team-person-name">Aditya Yadav</div>
+              <div class="team-person-role">Geospatial & 3D WebGL</div>
+              <div class="team-person-desc">React Three Fiber digital twin, Deck.gl layers</div>
+            </div>
+          </div>
+
+          <!-- Member 4 -->
+          <div class="team-glass-card">
+            <div class="team-avatar-box">AK</div>
+            <div class="team-details">
+              <div class="team-person-name">Aayush Kaushik</div>
+              <div class="team-person-role">Cloud & Deployment</div>
+              <div class="team-person-desc">Docker, sub-50ms WebSockets, CI/CD, PostGIS</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         PAGE 3: PROBLEM STATEMENT
+         ========================================================================== -->
+    <section class="slide-section" data-slide="3">
+      <div class="slide-header-centered">
+        <div class="slide-category-pill">CHALLENGE ANALYSIS</div>
+        <h2 class="slide-big-title">Problem Statement</h2>
+        <p class="slide-sub-title-centered" style="color: var(--syn-amber);">Urban Growth Fractures Civic Infrastructure into Blind Silos</p>
+        <div class="relative-video-tag">
+          <span class="video-dot"></span>
+          <span>BACKGROUND VIDEO: Dense Urban Traffic Gridlock & Choke Points</span>
+        </div>
+      </div>
+
+      <div class="slide-content-area">
+        <div class="split-grid-layout">
+          <div class="syntax-cards-col">
+            <div class="syntax-glass-card">
+              <span class="syntax-card-tag">THE CORE CRISIS</span>
+              <div class="syntax-card-body">
+                Rapid urbanization forces Sanitation, Mobility, and Emergency Services into isolated operational silos, causing delayed dispatches, unmonitored waste accumulation, and fuel waste.
+              </div>
+            </div>
+
+            <div class="syntax-glass-card">
+              <span class="syntax-card-tag">TARGET AUDIENCE</span>
+              <div class="syntax-card-body">
+                Municipal Corporations, City Traffic Police, Emergency First Responders (Ambulance/Fire), and Daily Urban Commuters.
+              </div>
+            </div>
+
+            <div class="syntax-glass-card">
+              <span class="syntax-card-tag">WHY IT MATTERS</span>
+              <div class="syntax-card-body">
+                Fragmented civic data causes life-threatening emergency corridor delays, severe neighborhood waste accumulation, and uncoordinated traffic gridlocks.
+              </div>
+            </div>
+          </div>
+
+          <!-- Exact Extracted Image -->
+          <div class="image-preview-frame">
+            <img src="presentation_assets/slide_image_2.jpg" alt="Urban Transit Corridor Road">
+            <div class="image-citation-tag">Photo: Unpetitprole, CC BY-SA 4.0, Wikimedia Commons</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         PAGE 4: PROBLEM CONTEXT & EXISTING SOLUTIONS
+         ========================================================================== -->
+    <section class="slide-section" data-slide="4">
+      <div class="slide-header-centered">
+        <div class="slide-category-pill">CONTEXT & INDUSTRY BENCHMARK</div>
+        <h2 class="slide-big-title">Problem Context & Existing Solutions</h2>
+        <p class="slide-sub-title-centered">Current smart city deployments fail due to hardware fragility, theft, and isolated data architectures.</p>
+        <div class="relative-video-tag">
+          <span class="video-dot"></span>
+          <span>BACKGROUND VIDEO: Street Hardware Failure & Sensor Noise</span>
+        </div>
+      </div>
+
+      <div class="slide-content-area">
+        <div class="split-grid-layout">
+          <div class="syntax-cards-col">
+            <div class="syntax-glass-card">
+              <span class="syntax-card-tag">EXISTING SMART CITY IOT</span>
+              <div class="syntax-card-title">Physical Hardware Traps</div>
+              <div class="syntax-card-body">
+                Rely on physical ultrasonic bin sensors and road magnetometer pucks prone to vandalism, theft, weathering, and recurrent battery maintenance costs.
+              </div>
+            </div>
+
+            <div class="syntax-glass-card">
+              <span class="syntax-card-tag">CURRENT OPERATIONAL STATE</span>
+              <div class="syntax-card-title">Fragmented Applications</div>
+              <div class="syntax-card-body">
+                Isolated point tools: standalone parking apps, fixed-schedule garbage collection routes, and manual officer traffic signal overriding.
+              </div>
+            </div>
+
+            <div class="syntax-glass-card">
+              <span class="syntax-card-tag">IDENTIFIED GAPS</span>
+              <div class="syntax-card-title">Zero Real-Time Mesh</div>
+              <div class="syntax-card-body">
+                No cross-departmental synchronization, total dependency on expensive field hardware, and complete absence of dynamic real-time spatial optimization.
+              </div>
+            </div>
+          </div>
+
+          <!-- Exact Extracted Image -->
+          <div class="image-preview-frame">
+            <img src="presentation_assets/slide_image_3.jpg" alt="Dense Urban Indian Marketplace">
+            <div class="image-citation-tag">Photo: Bsravikiran, CC BY-SA 3.0, Wikimedia Commons</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         PAGE 5: THE ARCHITECTURAL SHIFT
+         ========================================================================== -->
+    <section class="slide-section" data-slide="5">
+      <div class="slide-header-centered">
+        <div class="slide-category-pill">THE ARCHITECTURAL SHIFT</div>
+        <h2 class="slide-big-title">UrbanSync AI: A Hardware-Free Municipal Command Platform</h2>
+        <p class="slide-sub-title-centered" style="color: var(--syn-cyan); font-weight: 700;">Zero Physical Sensors. Purely Software-Driven Intelligence.</p>
+        <div class="relative-video-tag">
+          <span class="video-dot"></span>
+          <span>BACKGROUND VIDEO: Municipal Clean City & Waste Logistics Stream</span>
+        </div>
+      </div>
+
+      <div class="slide-content-area">
+        <div class="split-grid-layout">
+          <div class="syntax-cards-col">
+            <div class="syntax-glass-card">
+              <div class="syntax-card-title">Overview</div>
+              <div class="syntax-card-body">
+                Purely software-driven, hardware-free municipal command platform.
+              </div>
+            </div>
+
+            <div class="syntax-glass-card">
+              <div class="syntax-card-title">Core idea</div>
+              <div class="syntax-card-body">
+                Synchronizes departments through event-driven pub/sub, dynamic algorithmic routing, edge-anonymized computer vision and an interactive 3D WebGL digital twin.
+              </div>
+            </div>
+
+            <div class="syntax-glass-card">
+              <div class="syntax-card-title">How it helps</div>
+              <div class="syntax-card-body">
+                Turns existing static camera feeds into actionable data, routes sanitation trucks by fill-volume, and preemptively clears traffic corridors for emergency vehicles.
+              </div>
+            </div>
+          </div>
+
+          <!-- Exact Extracted Image -->
+          <div class="image-preview-frame">
+            <img src="presentation_assets/slide_image_4.jpg" alt="Municipal Clean City Waste Truck">
+            <div class="image-citation-tag">Photo: W84jon, CC0, Wikimedia Commons</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         PAGE 6: KEY FEATURES & INNOVATION
+         ========================================================================== -->
+    <section class="slide-section" data-slide="6">
+      <div class="slide-header-centered">
+        <div class="slide-category-pill">CORE CAPABILITIES</div>
+        <h2 class="slide-big-title">Key Features & Innovation</h2>
+        <p class="slide-sub-title-centered">Proprietary algorithmic pipelines delivering civilian safety, dynamic logistics, and automated traffic dispatching.</p>
+        <div class="relative-video-tag">
+          <span class="video-dot"></span>
+          <span>BACKGROUND VIDEO: YOLOv8 Object Tracking & 3D Lidar Scanning Stream</span>
+        </div>
+      </div>
+
+      <div class="slide-content-area">
+        <div class="features-5-columns">
+          <!-- 01 -->
+          <div class="feature-card-glass">
+            <div class="feature-num-big">01</div>
+            <div class="feature-tag-mono">SPATIAL TWIN</div>
+            <div class="feature-title-bold">3D Digital Twin</div>
+            <div class="feature-desc-text">Real-time WebGL command interface visualizing traffic density, waste hotspots, and fleet status.</div>
+          </div>
+
+          <!-- 02 -->
+          <div class="feature-card-glass">
+            <div class="feature-num-big">02</div>
+            <div class="feature-tag-mono">SAFETY MESH</div>
+            <div class="feature-title-bold">SafePath Routing</div>
+            <div class="feature-desc-text">Nirbhaya-Mesh for women's safety using 3D occlusion raycasting and dynamic street lighting analysis.</div>
+          </div>
+
+          <!-- 03 -->
+          <div class="feature-card-glass">
+            <div class="feature-num-big">03</div>
+            <div class="feature-tag-mono">TRAFFIC ENGINE</div>
+            <div class="feature-title-bold">SILN Corridor</div>
+            <div class="feature-desc-text">Dynamic departure scheduling with preemptive green-wave corridor clearance for emergency units.</div>
+          </div>
+
+          <!-- 04 -->
+          <div class="feature-card-glass">
+            <div class="feature-num-big">04</div>
+            <div class="feature-tag-mono">PRIVACY SHIELD</div>
+            <div class="feature-title-bold">Privacy-by-Design</div>
+            <div class="feature-desc-text">Gaussian facial and license plate blurring at edge ingestion with strict zero-biometric storage.</div>
+          </div>
+
+          <!-- 05 -->
+          <div class="feature-card-glass">
+            <div class="feature-num-big">05</div>
+            <div class="feature-tag-mono">AI INNOVATION</div>
+            <div class="feature-title-bold">Homography & OR-Tools</div>
+            <div class="feature-desc-text">Perspective alignment for waste delta tracking (T0 vs T1) paired with Google OR-Tools multi-truck solver.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         PAGE 7: PROPOSED WORKFLOW
+         ========================================================================== -->
+    <section class="slide-section" data-slide="7">
+      <div class="slide-header-centered">
+        <div class="slide-category-pill">SYSTEM ARCHITECTURE</div>
+        <h2 class="slide-big-title">Proposed Workflow</h2>
+        <p class="slide-sub-title-centered">Streaming event-driven pub/sub dataflow evaluating real-time spatial nodes.</p>
+        <div class="relative-video-tag">
+          <span class="video-dot"></span>
+          <span>BACKGROUND VIDEO: Cloud Server Pub/Sub Fiber Data Stream</span>
+        </div>
+      </div>
+
+      <div class="slide-content-area">
+        <div class="arch-flow-wrapper">
+          <div class="arch-engine-4-grid">
+            <div class="arch-node-card">
+              <div class="arch-node-icon">📹</div>
+              <div class="arch-node-title">Synthetic Ingestion Layer</div>
+              <div class="arch-node-desc"><strong>Ingestion:</strong> Analyzes CCTV feeds and citizen telemetry</div>
+            </div>
+
+            <div class="arch-node-card">
+              <div class="arch-node-icon">⚡</div>
+              <div class="arch-node-title">In-Memory Message Broker</div>
+              <div class="arch-node-desc"><strong>Processing:</strong> Evaluates waste delta and traffic nodes</div>
+            </div>
+
+            <div class="arch-node-card">
+              <div class="arch-node-icon">🧠</div>
+              <div class="arch-node-title">Core Optimization Engines</div>
+              <div class="arch-node-desc"><strong>Action:</strong> Updates Redis Pub/Sub channels</div>
+            </div>
+
+            <div class="arch-node-card">
+              <div class="arch-node-icon">🗄️</div>
+              <div class="arch-node-title">Persistent Spatial Storage</div>
+              <div class="arch-node-desc"><strong>Spatial storage</strong> (PostGIS spatial tables)</div>
+            </div>
+          </div>
+
+          <div class="arch-beneficiary-row">
+            <div class="beneficiary-pill">
+              <div class="beneficiary-role">DISPATCHERS</div>
+              <div class="beneficiary-text">See real-time 3D alerts.</div>
+            </div>
+
+            <div class="beneficiary-pill">
+              <div class="beneficiary-role">FIELD WORKERS · PWA</div>
+              <div class="beneficiary-text">Get optimized routes via PWA.</div>
+            </div>
+
+            <div class="beneficiary-pill">
+              <div class="beneficiary-role">CITIZENS</div>
+              <div class="beneficiary-text">Get safe navigation paths.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         PAGE 8: PROPOSED TECH STACK
+         ========================================================================== -->
+    <section class="slide-section" data-slide="8">
+      <div class="slide-header-centered">
+        <div class="slide-category-pill">ENGINEERING STACK</div>
+        <h2 class="slide-big-title">Proposed Tech Stack</h2>
+        <p class="slide-sub-title-centered">Battle-tested open-source frameworks, high-throughput asynchronous backends, and accelerated WebGL graphics.</p>
+        <div class="relative-video-tag">
+          <span class="video-dot"></span>
+          <span>BACKGROUND VIDEO: Modern Software Architecture & Code Compilation</span>
+        </div>
+      </div>
+
+      <div class="slide-content-area">
+        <div class="stack-5-grid">
+          <div class="stack-glass-pillar">
+            <div class="stack-cat-tag">FRONTEND</div>
+            <div class="stack-name-bold">Next.js 14</div>
+            <div class="stack-detail-text">React Three Fiber, Three.js, Deck.gl spatial layers, and Tailwind CSS.</div>
+          </div>
+
+          <div class="stack-glass-pillar">
+            <div class="stack-cat-tag">BACKEND</div>
+            <div class="stack-name-bold">FastAPI</div>
+            <div class="stack-detail-text">Python 3.11+, Async REST endpoints, and high-frequency WebSocket streams.</div>
+          </div>
+
+          <div class="stack-glass-pillar">
+            <div class="stack-cat-tag">DATABASE</div>
+            <div class="stack-name-bold">PostgreSQL</div>
+            <div class="stack-detail-text">PostGIS spatial extensions paired with Redis 7.x in-memory Pub/Sub cache.</div>
+          </div>
+
+          <div class="stack-glass-pillar">
+            <div class="stack-cat-tag">AI / CV</div>
+            <div class="stack-name-bold">YOLOv8 & OpenCV</div>
+            <div class="stack-detail-text">ONNX/PyTorch inference, Homography matrices, and Google OR-Tools CVRP solver.</div>
+          </div>
+
+          <div class="stack-glass-pillar">
+            <div class="stack-cat-tag">SPATIAL APIS</div>
+            <div class="stack-name-bold">NetworkX & Mapbox</div>
+            <div class="stack-detail-text">OSMnx for directed graph routing, OpenStreetMap data, and Mapbox GL shaders.</div>
+          </div>
+        </div>
+
+        <div class="stack-integration-glass">
+          <strong>Integration Architecture:</strong> Asynchronous REST APIs handle administrative triggers, while dedicated WebSockets push live vehicle telemetry and raycast safety maps to client devices.
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         PAGE 9: FEASIBILITY & EXECUTION PLAN
+         ========================================================================== -->
+    <section class="slide-section" data-slide="9">
+      <div class="slide-header-centered">
+        <div class="slide-category-pill">ROADMAP & FEASIBILITY</div>
+        <h2 class="slide-big-title">Feasibility & Execution Plan</h2>
+        <p class="slide-sub-title-centered"><strong>Approach:</strong> Microservices architecture deployed via Docker</p>
+        <div class="relative-video-tag">
+          <span class="video-dot"></span>
+          <span>BACKGROUND VIDEO: Docker Cloud Deployment & Microservices Fabric</span>
+        </div>
+      </div>
+
+      <div class="slide-content-area">
+        <div class="roadmap-2-col">
+          <div class="roadmap-glass-box">
+            <div class="roadmap-box-title">Milestones</div>
+            <div>
+              <div class="milestone-item-row">
+                <div class="milestone-badge-circle">1</div>
+                <div>Core API & database modeling</div>
+              </div>
+              <div class="milestone-item-row">
+                <div class="milestone-badge-circle">2</div>
+                <div>CV model integration and OR-Tools setup</div>
+              </div>
+              <div class="milestone-item-row">
+                <div class="milestone-badge-circle">3</div>
+                <div>3D spatial dashboard integration</div>
+              </div>
+              <div class="milestone-item-row">
+                <div class="milestone-badge-circle">4</div>
+                <div>Real-time testing via simulation daemons</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="roadmap-glass-box">
+            <div class="roadmap-box-title" style="color: var(--syn-amber);">Challenges</div>
+            <ul class="challenge-bullet-list">
+              <li>High-frequency WebSocket streams</li>
+              <li>Sub-50ms event sync</li>
+              <li>Accurate 3D spatial rendering</li>
+            </ul>
+
+            <div class="strategy-glass-banner">
+              <strong>Strategy:</strong> Parallel development of ML engines and Next.js frontend, unified through Docker-compose orchestration.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         PAGE 10: EXPECTED IMPACT (CLEAR AMBULANCE RELATIVE VIDEO)
+         ========================================================================== -->
+    <section class="slide-section" data-slide="10">
+      <div class="slide-header-centered">
+        <div class="slide-category-pill">METRICS & HORIZONS</div>
+        <h2 class="slide-big-title">Expected Impact & Future Scope</h2>
+        <p class="slide-sub-title-centered">Empowering civic authorities with quantifiable response acceleration and future drone/e-challan integrations.</p>
+        <div class="relative-video-tag" style="background: rgba(255, 94, 126, 0.2); border-color: var(--syn-coral); color: #fff;">
+          <span class="video-dot"></span>
+          <span>BACKGROUND RELATIVE VIDEO: Emergency Ambulance with Siren Flashing Lights (80% Clear)</span>
+        </div>
+      </div>
+
+      <div class="slide-content-area">
+        <div class="split-grid-layout">
+          <div class="impact-6-grid">
+            <div class="impact-card-glass">
+              <div class="impact-category-tag">IMPACT</div>
+              <div class="impact-val-highlight" style="color: var(--syn-cyan);">30% faster</div>
+              <div class="impact-desc-sub">emergency response</div>
+            </div>
+
+            <div class="impact-card-glass">
+              <div class="impact-category-tag">IMPACT</div>
+              <div class="impact-val-highlight" style="color: var(--syn-emerald);">Lower</div>
+              <div class="impact-desc-sub">municipal carbon footprint</div>
+            </div>
+
+            <div class="impact-card-glass">
+              <div class="impact-category-tag">IMPACT</div>
+              <div class="impact-val-highlight" style="color: var(--syn-amber);">Safer</div>
+              <div class="impact-desc-sub">urban transit</div>
+            </div>
+
+            <div class="impact-card-glass">
+              <div class="impact-category-tag">BENEFITS</div>
+              <div class="impact-val-highlight">Major cost savings</div>
+              <div class="impact-desc-sub">For city councils by eliminating IoT hardware maintenance.</div>
+            </div>
+
+            <div class="impact-card-glass">
+              <div class="impact-category-tag">SCALABILITY</div>
+              <div class="impact-val-highlight">Any municipal ward globally</div>
+              <div class="impact-desc-sub">Mapping OpenStreetMap data and connecting IP camera feeds.</div>
+            </div>
+
+            <div class="impact-card-glass">
+              <div class="impact-category-tag">FUTURE</div>
+              <div class="impact-val-highlight">Expanded civic operations</div>
+              <div class="impact-desc-sub">Drone-based feed integration, automated ticketing via E-Challan APIs, predictive weather hazard modeling.</div>
+            </div>
+          </div>
+
+          <!-- Exact Extracted Ambulance Image -->
+          <div class="image-preview-frame">
+            <img src="presentation_assets/slide_image_5.jpg" alt="Emergency Kuoni Ambulance Response Vehicle">
+            <div class="image-citation-tag">Photo: Bahnfrend, CC BY-SA 3.0, Wikimedia Commons</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Floating Navigation Dock -->
+  <nav class="hud-bottom-dock" aria-label="Deck Navigation">
+    <button class="nav-arrow-btn" id="btnPrevSlide" title="Previous Slide (Up / Left Arrow)">‹</button>
+
+    <div class="dock-thumbnails">
+      <div class="dock-dot active" data-target="1"><span class="dock-tooltip">01. CU Aerial & Title</span></div>
+      <div class="dock-dot" data-target="2"><span class="dock-tooltip">02. Team Introduction</span></div>
+      <div class="dock-dot" data-target="3"><span class="dock-tooltip">03. Problem Statement</span></div>
+      <div class="dock-dot" data-target="4"><span class="dock-tooltip">04. Existing Solutions</span></div>
+      <div class="dock-dot" data-target="5"><span class="dock-tooltip">05. Architectural Shift</span></div>
+      <div class="dock-dot" data-target="6"><span class="dock-tooltip">06. Key Innovations</span></div>
+      <div class="dock-dot" data-target="7"><span class="dock-tooltip">07. Proposed Workflow</span></div>
+      <div class="dock-dot" data-target="8"><span class="dock-tooltip">08. Proposed Tech Stack</span></div>
+      <div class="dock-dot" data-target="9"><span class="dock-tooltip">09. Feasibility & Plan</span></div>
+      <div class="dock-dot" data-target="10"><span class="dock-tooltip">10. Impact & Ambulance</span></div>
+    </div>
+
+    <button class="nav-arrow-btn" id="btnNextSlide" title="Next Slide (Down / Right Arrow / Space)">›</button>
+  </nav>
+
+  <!-- ==========================================================================
+       REAL-TIME HIGH-DEFINITION PROCEDURAL & RELATIVE VIDEO SYNTHESIZER
+       ========================================================================== -->
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 10;
+    let autoPlayInterval = null;
+    let isOrbitMode = false;
+    let isSoundOn = false;
+    let audioCtx = null;
+
+    // Camera viewpoints for 3D City Twin
+    const CAMERA_PRESETS = {
+      1: { pos: { x: 0, y: 150, z: 250 }, look: { x: 0, y: 20, z: 0 } },
+      2: { pos: { x: 75, y: 90, z: 135 }, look: { x: 20, y: 15, z: 0 } },
+      3: { pos: { x: -65, y: 60, z: 95 }, look: { x: -20, y: 0, z: -10 } },
+      4: { pos: { x: -95, y: 45, z: 75 }, look: { x: -10, y: 0, z: 10 } },
+      5: { pos: { x: 30, y: 75, z: -115 }, look: { x: 0, y: 10, z: 0 } },
+      6: { pos: { x: 115, y: 105, z: 50 }, look: { x: 0, y: 25, z: 0 } },
+      7: { pos: { x: 0, y: 175, z: 135 }, look: { x: 0, y: 0, z: 0 } },
+      8: { pos: { x: -115, y: 85, z: 105 }, look: { x: 0, y: 15, z: 0 } },
+      9: { pos: { x: 0, y: 55, z: 80 }, look: { x: 0, y: 20, z: -120 } },
+      10: { pos: { x: 0, y: 120, z: 230 }, look: { x: 0, y: 10, z: -50 } }
+    };
+
+    // --------------------------------------------------------------------------
+    // RELATIVE VIDEO SIMULATION ENGINES (80%+ CLEAR VISIBILITY)
+    // --------------------------------------------------------------------------
+    function initRelativeVideos() {
+      const renderers = {
+        // Slide 1: Chandigarh University (CU) Punjab Campus Drone Aerial
+        'proc-video-1': (ctx, w, h, frame) => {
+          // Deep sky / aerial daylight transition to sunset
+          const grad = ctx.createLinearGradient(0, 0, 0, h);
+          grad.addColorStop(0, '#0F1D38');
+          grad.addColorStop(0.6, '#1E3A8A');
+          grad.addColorStop(1, '#0B132B');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, w, h);
+
+          // CU Campus Main Grand Academic Gate & Towers (Geometric perspective)
+          ctx.fillStyle = '#172554';
+          ctx.fillRect(w * 0.15, h * 0.35, w * 0.7, h * 0.55);
+
+          // Academic block windows glowing
+          for (let row = 0; row < 6; row++) {
+            for (let col = 0; col < 18; col++) {
+              const wx = w * 0.18 + col * (w * 0.035);
+              const wy = h * 0.4 + row * (h * 0.07);
+              ctx.fillStyle = (Math.sin(frame * 0.03 + row + col) > -0.2) ? '#FFD166' : '#60A5FA';
+              ctx.fillRect(wx, wy, w * 0.02, h * 0.04);
+            }
+          }
+
+          // Aerial drone path indicator sweeping across campus
+          const droneX = (frame * 3) % w;
+          const droneY = h * 0.2 + Math.sin(frame * 0.02) * 40;
+          ctx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(droneX, droneY, 30, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // CU Holographic Crest Overlay
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+          ctx.font = 'bold 36px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('CHANDIGARH UNIVERSITY · PUNJAB', w / 2, h * 0.25);
+        },
+
+        // Slide 2: High-tech Engineering Matrix
+        'proc-video-2': (ctx, w, h, frame) => {
+          ctx.fillStyle = '#060B1E';
+          ctx.fillRect(0, 0, w, h);
+          ctx.font = '12px monospace';
+          ctx.fillStyle = 'rgba(0, 240, 255, 0.4)';
+          for (let i = 0; i < 28; i++) {
+            const x = (i * 45) % w;
+            const y = ((frame * 2.5) + i * 40) % h;
+            ctx.fillText(`API.stream(0x${(i * 1234).toString(16)}) -> sync:OK`, x, y);
+          }
+        },
+
+        // Slide 3: Dense Urban Traffic Gridlock
+        'proc-video-3': (ctx, w, h, frame) => {
+          ctx.fillStyle = '#0A0814';
+          ctx.fillRect(0, 0, w, h);
+          // Multi-lane road congestion with pulsing brake lights
+          for (let lane = 0; lane < 5; lane++) {
+            const y = h * 0.25 + lane * (h * 0.12);
+            ctx.fillStyle = '#1E1B2E';
+            ctx.fillRect(0, y, w, h * 0.09);
+            for (let v = 0; v < 14; v++) {
+              const vx = (v * (w * 0.08) + frame * 0.5) % w;
+              // Red brake lights stuck in jam
+              ctx.fillStyle = '#EF4444';
+              ctx.fillRect(vx, y + 10, 16, 8);
+              ctx.fillStyle = '#F59E0B';
+              ctx.fillRect(vx + 20, y + 10, 16, 8);
+            }
+          }
+        },
+
+        // Slide 4: Hardware Sensor Failure
+        'proc-video-4': (ctx, w, h, frame) => {
+          ctx.fillStyle = '#070D18';
+          ctx.fillRect(0, 0, w, h);
+          // Glitching radar sweep
+          const cx = w / 2, cy = h / 2;
+          const sweep = (frame * 0.04) % (Math.PI * 2);
+          ctx.strokeStyle = 'rgba(255, 183, 3, 0.35)';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + Math.cos(sweep) * (w * 0.4), cy + Math.sin(sweep) * (w * 0.4));
+          ctx.stroke();
+        },
+
+        // Slide 5: Municipal Waste Management Truck
+        'proc-video-5': (ctx, w, h, frame) => {
+          ctx.fillStyle = '#05111B';
+          ctx.fillRect(0, 0, w, h);
+          // Green route polygons
+          ctx.strokeStyle = '#10B981';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(w * 0.1, h * 0.7);
+          ctx.lineTo(w * 0.4, h * 0.3 + Math.sin(frame * 0.02) * 30);
+          ctx.lineTo(w * 0.8, h * 0.6);
+          ctx.stroke();
+          // Moving truck icon position
+          const tx = (frame * 2.2) % w;
+          ctx.fillStyle = '#00FF88';
+          ctx.fillRect(tx, h * 0.5, 34, 18);
+        },
+
+        // Slide 6: Real-time YOLOv8 Computer Vision Object Detection
+        'proc-video-6': (ctx, w, h, frame) => {
+          ctx.fillStyle = '#050D1A';
+          ctx.fillRect(0, 0, w, h);
+          // Moving detection bounding boxes
+          const boxX = (frame * 3.5) % (w - 140);
+          const boxY = h * 0.45 + Math.sin(frame * 0.02) * 50;
+          ctx.strokeStyle = '#00F0FF';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(boxX, boxY, 130, 80);
+          ctx.fillStyle = 'rgba(0, 240, 255, 0.2)';
+          ctx.fillRect(boxX, boxY, 130, 80);
+          ctx.fillStyle = '#00F0FF';
+          ctx.font = 'bold 12px monospace';
+          ctx.fillText('YOLOv8: VEHICLE [98.6%]', boxX + 6, boxY - 8);
+        },
+
+        // Slide 7: Cloud Pub/Sub Fiber Stream
+        'proc-video-7': (ctx, w, h, frame) => {
+          ctx.fillStyle = '#050A18';
+          ctx.fillRect(0, 0, w, h);
+          for (let i = 0; i < 20; i++) {
+            const y = (i * (h * 0.05) + frame * 3) % h;
+            ctx.fillStyle = '#00FF88';
+            ctx.fillRect(w * 0.2 + Math.sin(frame * 0.03 + i) * 60, y, 40, 4);
+          }
+        },
+
+        // Slide 8: Code Architecture Highway
+        'proc-video-8': (ctx, w, h, frame) => {
+          ctx.fillStyle = '#080518';
+          ctx.fillRect(0, 0, w, h);
+          for (let i = 0; i < 35; i++) {
+            const x = (i * 40 + frame * 10) % w;
+            const y = (i * 24) % h;
+            ctx.fillStyle = 'rgba(192, 132, 252, 0.5)';
+            ctx.fillRect(x, y, 50, 2.5);
+          }
+        },
+
+        // Slide 9: Docker Microservices Fabric
+        'proc-video-9': (ctx, w, h, frame) => {
+          ctx.fillStyle = '#050D1A';
+          ctx.fillRect(0, 0, w, h);
+          ctx.strokeStyle = 'rgba(0, 240, 255, 0.35)';
+          for (let i = 0; i < 8; i++) {
+            const x = w * 0.2 + i * (w * 0.09);
+            const y = h * 0.5 + Math.sin(frame * 0.04 + i) * 40;
+            ctx.strokeRect(x - 22, y - 22, 44, 44);
+          }
+        },
+
+        // Slide 10: REAL AMBULANCE WITH SIRENS FLASHER VIDEO SIMULATION
+        'proc-video-10': (ctx, w, h, frame) => {
+          // Night highway corridor with high-intensity siren flashes
+          ctx.fillStyle = '#030612';
+          ctx.fillRect(0, 0, w, h);
+
+          // Emerald Green Wave Highway cleared path
+          ctx.fillStyle = 'rgba(0, 255, 136, 0.16)';
+          ctx.fillRect(0, h * 0.35, w, h * 0.3);
+
+          // Fast road stripes moving
+          ctx.fillStyle = '#00FF88';
+          for (let r = 0; r < 14; r++) {
+            const rx = (r * (w * 0.1) - frame * 14) % w;
+            const finalRx = rx < 0 ? rx + w : rx;
+            ctx.fillRect(finalRx, h * 0.5 - 3, 50, 6);
+          }
+
+          // Emergency Ambulance Vehicle speeding
+          const ambX = w * 0.45;
+          const ambY = h * 0.44;
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(ambX, ambY, 110, 50); // Ambulance Body
+          ctx.fillStyle = '#DC2626';
+          ctx.fillRect(ambX + 45, ambY + 12, 20, 26); // Red Cross
+
+          // High-Intensity Flashing Siren Strobe (Alternating Red & Blue)
+          const isBlue = Math.floor(frame / 6) % 2 === 0;
+          ctx.fillStyle = isBlue ? '#00B4D8' : '#FF0055';
+          ctx.beginPath();
+          ctx.arc(ambX + 55, ambY - 6, 22, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Siren Light Flare Beams Across the Screen
+          const flareGrad = ctx.createRadialGradient(ambX + 55, ambY - 6, 10, ambX + 55, ambY - 6, w * 0.4);
+          flareGrad.addColorStop(0, isBlue ? 'rgba(0, 180, 216, 0.45)' : 'rgba(255, 0, 85, 0.45)');
+          flareGrad.addColorStop(1, 'transparent');
+          ctx.fillStyle = flareGrad;
+          ctx.fillRect(0, 0, w, h);
+        }
+      };
+
+      Object.keys(renderers).forEach(id => {
+        const canvas = document.getElementById(id);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let w = canvas.width = window.innerWidth;
+        let h = canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+          w = canvas.width = window.innerWidth;
+          h = canvas.height = window.innerHeight;
+        });
+
+        let f = 0;
+        function loop() {
+          f++;
+          renderers[id](ctx, w, h, f);
+          requestAnimationFrame(loop);
+        }
+        loop();
+      });
+    }
+
+    // --------------------------------------------------------------------------
+    // THREE.JS 3D CITY ENGINE
+    // --------------------------------------------------------------------------
+    let scene, camera, renderer, controls;
+    let cityGroup, trafficGroup, ambModel;
+    let targetCameraPos = { x: 0, y: 150, z: 250 };
+    let targetCameraLook = { x: 0, y: 20, z: 0 };
+    let currentCameraLook = new THREE.Vector3(0, 20, 0);
+
+    function initThreeCity() {
+      const canvas = document.getElementById('webgl-city-canvas');
+      scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x050814, 0.0025);
+
+      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1200);
+      camera.position.set(targetCameraPos.x, targetCameraPos.y, targetCameraPos.z);
+      camera.lookAt(targetCameraLook.x, targetCameraLook.y, targetCameraLook.z);
+
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enabled = false;
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+
+      const ambLight = new THREE.AmbientLight(0x38BDF8, 1.2);
+      scene.add(ambLight);
+
+      const dirLight = new THREE.DirectionalLight(0x00F0FF, 1.6);
+      dirLight.position.set(80, 160, 60);
+      scene.add(dirLight);
+
+      // Build 3D City
+      cityGroup = new THREE.Group();
+      const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+      const buildingMat = new THREE.MeshPhongMaterial({ color: 0x0C162E, emissive: 0x060D1E, shininess: 40 });
+      const wireMat = new THREE.LineBasicMaterial({ color: 0x00F0FF, transparent: true, opacity: 0.25 });
+
+      for (let x = -6; x <= 6; x++) {
+        for (let z = -6; z <= 6; z++) {
+          if (x % 3 === 0 || z % 3 === 0) continue;
+          const h = 20 + Math.random() * 60;
+          const mesh = new THREE.Mesh(boxGeo, buildingMat);
+          mesh.scale.set(16, h, 16);
+          mesh.position.set(x * 38, h / 2, z * 38);
+          cityGroup.add(mesh);
+
+          const edges = new THREE.EdgesGeometry(mesh.geometry);
+          const line = new THREE.LineSegments(edges, wireMat);
+          line.scale.copy(mesh.scale);
+          line.position.copy(mesh.position);
+          cityGroup.add(line);
+        }
+      }
+      scene.add(cityGroup);
+
+      // Grid ground
+      const grid = new THREE.GridHelper(500, 50, 0x00F0FF, 0x1E293B);
+      grid.position.y = -0.5;
+      scene.add(grid);
+
+      window.addEventListener('resize', onWindowResize);
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animateThree() {
+      requestAnimationFrame(animateThree);
+      if (!isOrbitMode) {
+        camera.position.x += (targetCameraPos.x - camera.position.x) * 0.05;
+        camera.position.y += (targetCameraPos.y - camera.position.y) * 0.05;
+        camera.position.z += (targetCameraPos.z - camera.position.z) * 0.05;
+
+        currentCameraLook.x += (targetCameraLook.x - currentCameraLook.x) * 0.05;
+        currentCameraLook.y += (targetCameraLook.y - currentCameraLook.y) * 0.05;
+        currentCameraLook.z += (targetCameraLook.z - currentCameraLook.z) * 0.05;
+        camera.lookAt(currentCameraLook);
+      } else {
+        controls.update();
+      }
+      renderer.render(scene, camera);
+    }
+
+    // --------------------------------------------------------------------------
+    // DECK NAVIGATION & SLIDE TRANSITIONS
+    // --------------------------------------------------------------------------
+    const slideElements = document.querySelectorAll('.slide-section');
+    const dockDots = document.querySelectorAll('.dock-dot');
+    const currentSlideNumEl = document.getElementById('currentSlideNum');
+    const videoLayers = document.querySelectorAll('.video-slide-layer');
+
+    function goToSlide(slideIdx) {
+      if (slideIdx < 1 || slideIdx > totalSlides) return;
+      currentSlide = slideIdx;
+
+      playSfx('transition');
+
+      slideElements.forEach(el => {
+        const sNum = parseInt(el.getAttribute('data-slide'));
+        el.classList.remove('active', 'prev');
+        if (sNum === currentSlide) el.classList.add('active');
+        else if (sNum < currentSlide) el.classList.add('prev');
+      });
+
+      currentSlideNumEl.textContent = currentSlide < 10 ? `0${currentSlide}` : `${currentSlide}`;
+
+      dockDots.forEach(dot => {
+        const target = parseInt(dot.getAttribute('data-target'));
+        dot.classList.toggle('active', target === currentSlide);
+      });
+
+      videoLayers.forEach((layer, idx) => {
+        layer.classList.toggle('active', (idx + 1) === currentSlide);
+      });
+
+      if (!isOrbitMode && CAMERA_PRESETS[currentSlide]) {
+        targetCameraPos = CAMERA_PRESETS[currentSlide].pos;
+        targetCameraLook = CAMERA_PRESETS[currentSlide].look;
+      }
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) goToSlide(currentSlide + 1);
+      else goToSlide(1);
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) goToSlide(currentSlide - 1);
+    }
+
+    // Wheel & Keyboard
+    let isScrollDebounced = false;
+    window.addEventListener('wheel', (e) => {
+      if (isOrbitMode || isScrollDebounced) return;
+      if (e.deltaY > 30) {
+        isScrollDebounced = true;
+        nextSlide();
+        setTimeout(() => isScrollDebounced = false, 750);
+      } else if (e.deltaY < -30) {
+        isScrollDebounced = true;
+        prevSlide();
+        setTimeout(() => isScrollDebounced = false, 750);
+      }
+    }, { passive: true });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key >= '1' && e.key <= '9') {
+        goToSlide(parseInt(e.key));
+      } else if (e.key === '0') {
+        goToSlide(10);
+      } else if (e.key.toLowerCase() === 'f') {
+        toggleFullscreen();
+      } else if (e.key.toLowerCase() === 'p') {
+        toggleAutoPlay();
+      } else if (e.key.toLowerCase() === 'o') {
+        toggleOrbitMode();
+      } else if (e.key.toLowerCase() === 'm') {
+        toggleAudio();
+      }
+    });
+
+    document.getElementById('btnNextSlide').addEventListener('click', nextSlide);
+    document.getElementById('btnPrevSlide').addEventListener('click', prevSlide);
+
+    dockDots.forEach(dot => {
+      dot.addEventListener('click', () => {
+        goToSlide(parseInt(dot.getAttribute('data-target')));
+      });
+    });
+
+    // Orbit Mode
+    const btnOrbit = document.getElementById('btnOrbitMode');
+    const cityCanvas = document.getElementById('webgl-city-canvas');
+    function toggleOrbitMode() {
+      isOrbitMode = !isOrbitMode;
+      btnOrbit.classList.toggle('active', isOrbitMode);
+      controls.enabled = isOrbitMode;
+      cityCanvas.classList.toggle('interactive-orbit', isOrbitMode);
+      btnOrbit.innerHTML = isOrbitMode ? '<span>🔒 Exit Orbit</span>' : '<span>🌐 3D Free-Fly</span>';
+      if (!isOrbitMode) goToSlide(currentSlide);
+    }
+    btnOrbit.addEventListener('click', toggleOrbitMode);
+
+    // Auto Play
+    const btnAuto = document.getElementById('btnAutoPlay');
+    function toggleAutoPlay() {
+      if (autoPlayInterval) {
+        clearInterval(autoPlayInterval);
+        autoPlayInterval = null;
+        btnAuto.classList.remove('active');
+        btnAuto.innerHTML = '<span>▶ Auto Play</span>';
+      } else {
+        btnAuto.classList.add('active');
+        btnAuto.innerHTML = '<span>⏸ Pause</span>';
+        autoPlayInterval = setInterval(nextSlide, 8500);
+      }
+    }
+    btnAuto.addEventListener('click', toggleAutoPlay);
+
+    // Audio SFX
+    const btnAudio = document.getElementById('btnAudioToggle');
+    function toggleAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      isSoundOn = !isSoundOn;
+      btnAudio.classList.toggle('active', isSoundOn);
+      btnAudio.innerHTML = isSoundOn ? '<span>🔊 Audio ON</span>' : '<span>🔇 Sound</span>';
+    }
+    btnAudio.addEventListener('click', toggleAudio);
+
+    function playSfx(type) {
+      if (!isSoundOn || !audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(760, now + 0.12);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      } catch (e) {}
+    }
+
+    // PDF Print Export
+    document.getElementById('btnPrintPdf').addEventListener('click', () => {
+      window.open('pdf_view.html', '_blank');
+    });
+
+    // Fullscreen
+    const btnFs = document.getElementById('btnFullscreen');
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+      else if (document.exitFullscreen) document.exitFullscreen();
+    }
+    btnFs.addEventListener('click', toggleFullscreen);
+
+    // Init
+    window.addEventListener('DOMContentLoaded', () => {
+      initRelativeVideos();
+      initThreeCity();
+      animateThree();
+      goToSlide(1);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UrbanSync AI — Official Hackathon Presentation Deck (PDF View)</title>
+  <meta name="description" content="UrbanSync AI: Autonomous Civic Operations, Mobility Mesh & 3D Spatial Digital Twin. Code Yudh Hackathon, Chandigarh University. Official 16:9 Presentation PDF.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #070B19;
+      --card-bg: rgba(14, 22, 44, 0.72);
+      --pure-white: #FFFFFF;
+      --text-sub: #CBD5E1;
+      --text-dim: #94A3B8;
+
+      /* Aesthetic Syntax Accents */
+      --syn-cyan: #00F0FF;
+      --syn-emerald: #00FF88;
+      --syn-amber: #FFB703;
+      --syn-purple: #C084FC;
+      --syn-coral: #FF5E7E;
+
+      --font-heading: 'Space Grotesk', -apple-system, sans-serif;
+      --font-body: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #030611;
+      color: var(--pure-white);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ==========================================================================
+       ACTION BAR FOR WEB VIEW (Hidden during print)
+       ========================================================================== */
+    .web-action-bar {
+      position: sticky;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 60px;
+      background: rgba(7, 11, 25, 0.94);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(0, 240, 255, 0.25);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    .bar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+    .bar-brand span { color: var(--syn-cyan); }
+
+    .bar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .action-btn {
+      background: rgba(0, 240, 255, 0.12);
+      border: 1px solid var(--syn-cyan);
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .action-btn:hover {
+      background: var(--syn-cyan);
+      color: #070B19;
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.4);
+      transform: translateY(-1px);
+    }
+    .action-btn.gold {
+      background: rgba(255, 183, 3, 0.15);
+      border-color: var(--syn-amber);
+      color: var(--syn-amber);
+    }
+    .action-btn.gold:hover {
+      background: var(--syn-amber);
+      color: #070B19;
+      box-shadow: 0 0 16px rgba(255, 183, 3, 0.4);
+    }
+
+    /* ==========================================================================
+       16:9 LANDSCAPE PDF PAGE CONTAINER
+       ========================================================================== */
+    .pdf-deck-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+      padding: 40px 20px;
+    }
+
+    .pdf-page-sheet {
+      width: 1333px; /* 16:9 aspect ratio at 1333x750 */
+      height: 750px;
+      background: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(0, 240, 255, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(192, 132, 252, 0.06) 0%, transparent 40%),
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+      border: 1.5px solid rgba(0, 240, 255, 0.3);
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 240, 255, 0.1);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 32px 48px;
+      overflow: hidden;
+      page-break-after: always;
+      page-break-inside: avoid;
+    }
+
+    /* Top Rail Header on Every Page */
+    .sheet-header-rail {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+    }
+
+    .sheet-category-badge {
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--syn-cyan);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sheet-category-badge::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      background: var(--syn-cyan);
+      box-shadow: 0 0 8px var(--syn-cyan);
+      border-radius: 2px;
+    }
+
+    .sheet-meta-right {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+    }
+
+    /* Bottom Rail Footer on Every Page */
+    .sheet-footer-rail {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 12px;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      margin-top: auto;
+    }
+
+    .sheet-page-tag {
+      color: var(--pure-white);
+      font-weight: 700;
+    }
+
+    /* Centered Titles */
+    .sheet-title-center {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .sheet-big-title {
+      font-family: var(--font-heading);
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: var(--pure-white);
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      margin-bottom: 6px;
+    }
+
+    .sheet-sub-title {
+      font-size: 1.05rem;
+      color: var(--text-sub);
+      font-weight: 500;
+      max-width: 900px;
+      margin: 0 auto;
+      line-height: 1.45;
+    }
+    .sheet-sub-title strong {
+      color: var(--syn-cyan);
+    }
+
+    /* Content Layouts */
+    .sheet-body-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .split-layout-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 32px;
+      align-items: center;
+      height: 100%;
+    }
+
+    .syntax-cards-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .glass-card-item {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-left: 4px solid var(--syn-cyan);
+      border-radius: 8px;
+      padding: 16px 20px;
+    }
+
+    .glass-card-tag {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--syn-cyan);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .glass-card-title {
+      font-family: var(--font-heading);
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--pure-white);
+      margin-bottom: 4px;
+    }
+
+    .glass-card-text {
+      font-size: 0.92rem;
+      color: var(--text-sub);
+      line-height: 1.5;
+    }
+
+    .image-sheet-frame {
+      position: relative;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      height: 380px;
+      background: #0B132B;
+    }
+    .image-sheet-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .photo-credit {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(5, 8, 18, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--text-dim);
+    }
+
+    /* Page 1 Hero Layout */
+    .hero-center-box {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      position: relative;
+    }
+
+    .hero-bg-overlay {
+      position: absolute;
+      inset: -32px -48px;
+      width: calc(100% + 96px);
+      height: calc(100% + 64px);
+      object-fit: cover;
+      opacity: 0.28;
+      z-index: 0;
+    }
+
+    .hero-content-z {
+      position: relative;
+      z-index: 2;
+      max-width: 1000px;
+    }
+
+    .hero-cu-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 183, 3, 0.12);
+      border: 1px solid var(--syn-amber);
+      padding: 6px 20px;
+      border-radius: 20px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--syn-amber);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .hero-h1-big {
+      font-family: var(--font-heading);
+      font-size: 4.8rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-bottom: 14px;
+      color: #fff;
+      text-shadow: 0 0 40px rgba(0, 240, 255, 0.5);
+    }
+
+    .hero-h2-sub {
+      font-size: 1.5rem;
+      color: var(--syn-cyan);
+      font-weight: 600;
+      margin-bottom: 30px;
+      line-height: 1.4;
+    }
+
+    .hero-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      background: rgba(7, 11, 25, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 14px 28px;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+    }
+
+    /* Page 2 Team Grid */
+    .team-grid-2x2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    .team-sheet-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 22px 24px;
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+    }
+    .team-sheet-avatar {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(192, 132, 252, 0.25));
+      border: 1.5px solid var(--syn-cyan);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    /* Page 6 Features Grid */
+    .features-5-grid-sheet {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+    }
+    .feature-sheet-item {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .feature-sheet-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--syn-cyan), var(--syn-emerald));
+    }
+
+    /* Page 7 Architecture */
+    .arch-grid-top {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .arch-card-box {
+      background: var(--card-bg);
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      border-radius: 10px;
+      padding: 18px 16px;
+    }
+    .arch-grid-bottom {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .beneficiary-box-sheet {
+      background: rgba(0, 255, 136, 0.1);
+      border: 1px solid rgba(0, 255, 136, 0.3);
+      border-radius: 8px;
+      padding: 14px 18px;
+    }
+
+    /* Page 8 Tech Stack */
+    .stack-5-grid-sheet {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .stack-pillar-sheet {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 18px 14px;
+    }
+
+    /* Page 9 Roadmap */
+    .roadmap-split-sheet {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 24px;
+    }
+    .roadmap-card-sheet {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 10px;
+      padding: 22px 26px;
+    }
+
+    /* Page 10 Impact */
+    .impact-6-grid-sheet {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    .impact-card-sheet {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 8px;
+      padding: 16px 18px;
+    }
+
+    /* ==========================================================================
+       PRINT PRECISE RULES (@media print)
+       ========================================================================== */
+    @media print {
+      @page {
+        size: 16in 9in;
+        margin: 0;
+      }
+      html, body {
+        background: #070B19 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .web-action-bar {
+        display: none !important;
+      }
+      .pdf-deck-wrapper {
+        padding: 0 !important;
+        gap: 0 !important;
+      }
+      .pdf-page-sheet {
+        width: 16in !important;
+        height: 9in !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        padding: 40px 60px !important;
+        margin: 0 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Web Action Bar (Sticky at Top) -->
+  <header class="web-action-bar">
+    <div class="bar-brand">
+      URBANSYNC<span> AI</span> · Official Pitch Deck PDF View
+    </div>
+    <div class="bar-actions">
+      <a href="presentation.html" class="action-btn">
+        <span>🎬 Back to Live 3D Deck</span>
+      </a>
+      <a href="UrbanSync_AI_Pitch_Deck.pdf" download class="action-btn gold" id="btnDownloadFile">
+        <span>📥 Download PDF File</span>
+      </a>
+      <button class="action-btn" onclick="window.print()">
+        <span>🖨️ Print / Save as PDF</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="pdf-deck-wrapper">
+
+    <!-- ==========================================================================
+         PAGE 1: TITLE SLIDE
+         ========================================================================== -->
+    <section class="pdf-page-sheet" id="page-1">
+      <div class="sheet-header-rail">
+        <div class="sheet-category-badge">SMART CITY / GOVTECH INNOVATION</div>
+        <div class="sheet-meta-right">CODE YUDH 2026 · PS-02</div>
+      </div>
+
+      <div class="sheet-body-content">
+        <div class="hero-center-box">
+          <img src="presentation_assets/slide_image_1.jpg" alt="Chandigarh Urban Aerial" class="hero-bg-overlay">
+          
+          <div class="hero-content-z">
+            <div class="hero-cu-pill">
+              🏛️ Organized by Department of Computer Science & Engineering, Chandigarh University
+            </div>
+
+            <h1 class="hero-h1-big">URBANSYNC AI</h1>
+            <p class="hero-h2-sub">Autonomous Civic Operations, Mobility Mesh & 3D Spatial Digital Twin</p>
+
+            <div class="hero-meta-row">
+              <div>Team: <strong style="color: var(--syn-amber);">Ikarus</strong></div>
+              <div>·</div>
+              <div>Chandigarh University, Punjab</div>
+              <div>·</div>
+              <div style="color: var(--syn-emerald);">Photo: Shyamal L., CC BY-SA 3.0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet-footer-rail">
+        <div>Photo: Shyamal L., CC BY-SA 3.0, Wikimedia Commons</div>
+        <div class="sheet-page-tag">UrbanSync AI 1</div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         PAGE 2: TEAM INTRODUCTION & CONTRIBUTIONS
+         ========================================================================== -->
+    <section class="pdf-page-sheet" id="page-2">
+      <div class="sheet-header-rail">
+        <div class="sheet-category-badge">TEAM IKARUS</div>
+        <div class="sheet-meta-right">CHANDIGARH UNIVERSITY</div>
+      </div>
+
+      <div class="sheet-title-center">
+        <h2 class="sheet-big-title">Team Introduction & Contributions</h2>
+        <p class="sheet-sub-title">Chandigarh University engineering squad bridging high-throughput APIs, edge computer vision, and spatial WebGL.</p>
+      </div>
+
+      <div class="sheet-body-content">
+        <div class="team-grid-2x2">
+          <!-- Member 1 -->
+          <div class="team-sheet-card">
+            <div class="team-sheet-avatar">AK</div>
+            <div>
+              <div style="font-family: var(--font-heading); font-size: 1.3rem; font-weight: 800;">Akshat Kaushik</div>
+              <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--syn-cyan); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Full-stack & APIs</div>
+              <div style="font-size: 0.9rem; color: var(--text-sub);">async API architecture, Redis integration, frontend state</div>
+            </div>
+          </div>
+
+          <!-- Member 2 -->
+          <div class="team-sheet-card">
+            <div class="team-sheet-avatar">AT</div>
+            <div>
+              <div style="font-family: var(--font-heading); font-size: 1.3rem; font-weight: 800;">Aaditya Tomar</div>
+              <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--syn-cyan); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">AI/ML & Computer Vision</div>
+              <div style="font-size: 0.9rem; color: var(--text-sub);">YOLOv8 fine-tuning, homography, edge inference</div>
+            </div>
+          </div>
+
+          <!-- Member 3 -->
+          <div class="team-sheet-card">
+            <div class="team-sheet-avatar">AY</div>
+            <div>
+              <div style="font-family: var(--font-heading); font-size: 1.3rem; font-weight: 800;">Aditya Yadav</div>
+              <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--syn-cyan); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Geospatial & 3D WebGL</div>
+              <div style="font-size: 0.9rem; color: var(--text-sub);">React Three Fiber digital twin, Deck.gl layers</div>
+            </div>
+          </div>
+
+          <!-- Member 4 -->
+          <div class="team-sheet-card">
+            <div class="team-sheet-avatar">AK</div>
+            <div>
+              <div style="font-family: var(--font-heading); font-size: 1.3rem; font-weight: 800;">Aayush Kaushik</div>
+              <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--syn-cyan); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Cloud & Deployment</div>
+              <div style="font-size: 0.9rem; color: var(--text-sub);">Docker, sub-50ms WebSockets, CI/CD, PostGIS</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet-footer-rail">
+        <div>Department of Computer Science & Engineering</div>
+        <div class="sheet-page-tag">UrbanSync AI 2</div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         PAGE 3: PROBLEM STATEMENT
+         ========================================================================== -->
+    <section class="pdf-page-sheet" id="page-3">
+      <div class="sheet-header-rail">
+        <div class="sheet-category-badge">CHALLENGE ANALYSIS</div>
+        <div class="sheet-meta-right">URBAN BOTTLENECKS</div>
+      </div>
+
+      <div class="sheet-title-center">
+        <h2 class="sheet-big-title">Problem Statement</h2>
+        <p class="sheet-sub-title" style="color: var(--syn-amber); font-weight: 700;">Urban Growth Fractures Civic Infrastructure into Blind Silos</p>
+      </div>
+
+      <div class="sheet-body-content">
+        <div class="split-layout-grid">
+          <div class="syntax-cards-stack">
+            <div class="glass-card-item">
+              <span class="glass-card-tag">THE CORE CRISIS</span>
+              <div class="glass-card-text">
+                Rapid urbanization forces Sanitation, Mobility, and Emergency Services into isolated operational silos, causing delayed dispatches, unmonitored waste accumulation, and fuel waste.
+              </div>
+            </div>
+
+            <div class="glass-card-item">
+              <span class="glass-card-tag">TARGET AUDIENCE</span>
+              <div class="glass-card-text">
+                Municipal Corporations, City Traffic Police, Emergency First Responders (Ambulance/Fire), and Daily Urban Commuters.
+              </div>
+            </div>
+
+            <div class="glass-card-item">
+              <span class="glass-card-tag">WHY IT MATTERS</span>
+              <div class="glass-card-text">
+                Fragmented civic data causes life-threatening emergency corridor delays, severe neighborhood waste accumulation, and uncoordinated traffic gridlocks.
+              </div>
+            </div>
+          </div>
+
+          <div class="image-sheet-frame">
+            <img src="presentation_assets/slide_image_2.jpg" alt="Urban Transit Corridor Road">
+            <div class="photo-credit">Photo: Unpetitprole, CC BY-SA 4.0, Wikimedia Commons</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet-footer-rail">
+        <div>Photo: Unpetitprole, CC BY-SA 4.0, Wikimedia Commons</div>
+        <div class="sheet-page-tag">UrbanSync AI 3</div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         PAGE 4: PROBLEM CONTEXT & EXISTING SOLUTIONS
+         ========================================================================== -->
+    <section class="pdf-page-sheet" id="page-4">
+      <div class="sheet-header-rail">
+        <div class="sheet-category-badge">CONTEXT & INDUSTRY BENCHMARK</div>
+        <div class="sheet-meta-right">LEGACY IOT TRAPS</div>
+      </div>
+
+      <div class="sheet-title-center">
+        <h2 class="sheet-big-title">Problem Context & Existing Solutions</h2>
+        <p class="sheet-sub-title">Current smart city deployments fail due to hardware fragility, theft, and isolated data architectures.</p>
+      </div>
+
+      <div class="sheet-body-content">
+        <div class="split-layout-grid">
+          <div class="syntax-cards-stack">
+            <div class="glass-card-item">
+              <span class="glass-card-tag">EXISTING SMART CITY IOT</span>
+              <div class="glass-card-title">Physical Hardware Traps</div>
+              <div class="glass-card-text">
+                Rely on physical ultrasonic bin sensors and road magnetometer pucks prone to vandalism, theft, weathering, and recurrent battery maintenance costs.
+              </div>
+            </div>
+
+            <div class="glass-card-item">
+              <span class="glass-card-tag">CURRENT OPERATIONAL STATE</span>
+              <div class="glass-card-title">Fragmented Applications</div>
+              <div class="glass-card-text">
+                Isolated point tools: standalone parking apps, fixed-schedule garbage collection routes, and manual officer traffic signal overriding.
+              </div>
+            </div>
+
+            <div class="glass-card-item">
+              <span class="glass-card-tag">IDENTIFIED GAPS</span>
+              <div class="glass-card-title">Zero Real-Time Mesh</div>
+              <div class="glass-card-text">
+                No cross-departmental synchronization, total dependency on expensive field hardware, and complete absence of dynamic real-time spatial optimization.
+              </div>
+            </div>
+          </div>
+
+          <div class="image-sheet-frame">
+            <img src="presentation_assets/slide_image_3.jpg" alt="Dense Urban Indian Marketplace">
+            <div class="photo-credit">Photo: Bsravikiran, CC BY-SA 3.0, Wikimedia Commons</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet-footer-rail">
+        <div>Photo: Bsravikiran, CC BY-SA 3.0, Wikimedia Commons</div>
+        <div class="sheet-page-tag">UrbanSync AI 4</div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         PAGE 5: THE ARCHITECTURAL SHIFT
+         ========================================================================== -->
+    <section class="pdf-page-sheet" id="page-5">
+      <div class="sheet-header-rail">
+        <div class="sheet-category-badge">THE ARCHITECTURAL SHIFT</div>
+        <div class="sheet-meta-right">SOFTWARE-DEFINED CIVIC MESH</div>
+      </div>
+
+      <div class="sheet-title-center">
+        <h2 class="sheet-big-title">UrbanSync AI: A Hardware-Free Municipal Command Platform</h2>
+        <p class="sheet-sub-title" style="color: var(--syn-cyan); font-weight: 700;">Zero Physical Sensors. Purely Software-Driven Intelligence.</p>
+      </div>
+
+      <div class="sheet-body-content">
+        <div class="split-layout-grid">
+          <div class="syntax-cards-stack">
+            <div class="glass-card-item">
+              <div class="glass-card-title">Overview</div>
+              <div class="glass-card-text">
+                Purely software-driven, hardware-free municipal command platform.
+              </div>
+            </div>
+
+            <div class="glass-card-item">
+              <div class="glass-card-title">Core idea</div>
+              <div class="glass-card-text">
+                Synchronizes departments through event-driven pub/sub, dynamic algorithmic routing, edge-anonymized computer vision and an interactive 3D WebGL digital twin.
+              </div>
+            </div>
+
+            <div class="glass-card-item">
+              <div class="glass-card-title">How it helps</div>
+              <div class="glass-card-text">
+                Turns existing static camera feeds into actionable data, routes sanitation trucks by fill-volume, and preemptively clears traffic corridors for emergency vehicles.
+              </div>
+            </div>
+          </div>
+
+          <div class="image-sheet-frame">
+            <img src="presentation_assets/slide_image_4.jpg" alt="Municipal Clean City Waste Truck">
+            <div class="photo-credit">Photo: W84jon, CC0, Wikimedia Commons</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet-footer-rail">
+        <div>Photo: W84jon, CC0, Wikimedia Commons</div>
+        <div class="sheet-page-tag">UrbanSync AI 5</div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         PAGE 6: KEY FEATURES & INNOVATION
+         ========================================================================== -->
+    <section class="pdf-page-sheet" id="page-6">
+      <div class="sheet-header-rail">
+        <div class="sheet-category-badge">CORE CAPABILITIES</div>
+        <div class="sheet-meta-right">PROPRIETARY ALGORITHMIC PIPELINE</div>
+      </div>
+
+      <div class="sheet-title-center">
+        <h2 class="sheet-big-title">Key Features & Innovation</h2>
+        <p class="sheet-sub-title">Proprietary algorithmic pipelines delivering civilian safety, dynamic logistics, and automated traffic dispatching.</p>
+      </div>
+
+      <div class="sheet-body-content">
+        <div class="features-5-grid-sheet">
+          <!-- 01 -->
+          <div class="feature-sheet-item">
+            <div style="font-family: var(--font-heading); font-size: 2.2rem; font-weight: 900; color: var(--syn-cyan); line-height: 1; margin-bottom: 6px;">01</div>
+            <div style="font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; color: var(--syn-emerald); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px;">SPATIAL TWIN</div>
+            <div style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 800; color: #fff; margin-bottom: 8px;">3D Digital Twin</div>
+            <div style="font-size: 0.84rem; color: var(--text-sub); line-height: 1.5;">Real-time WebGL command interface visualizing traffic density, waste hotspots, and fleet status.</div>
+          </div>
+
+          <!-- 02 -->
+          <div class="feature-sheet-item">
+            <div style="font-family: var(--font-heading); font-size: 2.2rem; font-weight: 900; color: var(--syn-cyan); line-height: 1; margin-bottom: 6px;">02</div>
+            <div style="font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; color: var(--syn-emerald); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px;">SAFETY MESH</div>
+            <div style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 800; color: #fff; margin-bottom: 8px;">SafePath Routing</div>
+            <div style="font-size: 0.84rem; color: var(--text-sub); line-height: 1.5;">Nirbhaya-Mesh for women's safety using 3D occlusion raycasting and dynamic street lighting analysis.</div>
+          </div>
+
+          <!-- 03 -->
+          <div class="feature-sheet-item">
+            <div style="font-family: var(--font-heading); font-size: 2.2rem; font-weight: 900; color: var(--syn-cyan); line-height: 1; margin-bottom: 6px;">03</div>
+            <div style="font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; color: var(--syn-emerald); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px;">TRAFFIC ENGINE</div>
+            <div style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 800; color: #fff; margin-bottom: 8px;">SILN Corridor</div>
+            <div style="font-size: 0.84rem; color: var(--text-sub); line-height: 1.5;">Dynamic departure scheduling with preemptive green-wave corridor clearance for emergency units.</div>
+          </div>
+
+          <!-- 04 -->
+          <div class="feature-sheet-item">
+            <div style="font-family: var(--font-heading); font-size: 2.2rem; font-weight: 900; color: var(--syn-cyan); line-height: 1; margin-bottom: 6px;">04</div>
+            <div style="font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; color: var(--syn-emerald); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px;">PRIVACY SHIELD</div>
+            <div style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 800; color: #fff; margin-bottom: 8px;">Privacy-by-Design</div>
+            <div style="font-size: 0.84rem; color: var(--text-sub); line-height: 1.5;">Gaussian facial and license plate blurring at edge ingestion with strict zero-biometric storage.</div>
+          </div>
+
+          <!-- 05 -->
+          <div class="feature-sheet-item">
+            <div style="font-family: var(--font-heading); font-size: 2.2rem; font-weight: 900; color: var(--syn-cyan); line-height: 1; margin-bottom: 6px;">05</div>
+            <div style="font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; color: var(--syn-emerald); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px;">AI INNOVATION</div>
+            <div style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 800; color: #fff; margin-bottom: 8px;">Homography & OR-Tools</div>
+            <div style="font-size: 0.84rem; color: var(--text-sub); line-height: 1.5;">Perspective alignment for waste delta tracking (T0 vs T1) paired with Google OR-Tools multi-truck solver.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet-footer-rail">
+        <div>Patent-Pending Algorithmic Pipeline</div>
+        <div class="sheet-page-tag">UrbanSync AI 6</div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         PAGE 7: PROPOSED WORKFLOW
+         ========================================================================== -->
+    <section class="pdf-page-sheet" id="page-7">
+      <div class="sheet-header-rail">
+        <div class="sheet-category-badge">SYSTEM ARCHITECTURE</div>
+        <div class="sheet-meta-right">END-TO-END DATAFLOW PIPELINE</div>
+      </div>
+
+      <div class="sheet-title-center">
+        <h2 class="sheet-big-title">Proposed Workflow</h2>
+        <p class="sheet-sub-title">High-velocity streaming data pipeline connecting edge vision, in-memory brokerage, and distributed spatial actors.</p>
+      </div>
+
+      <div class="sheet-body-content">
+        <div class="arch-grid-top">
+          <div class="arch-card-box">
+            <div style="font-size: 1.5rem; margin-bottom: 6px;">📹</div>
+            <div style="font-family: var(--font-heading); font-size: 1.1rem; font-weight: 800; margin-bottom: 4px;">Synthetic Ingestion Layer</div>
+            <div style="font-size: 0.85rem; color: var(--text-sub);"><strong>Ingestion:</strong> Analyzes CCTV feeds and citizen telemetry</div>
+          </div>
+
+          <div class="arch-card-box">
+            <div style="font-size: 1.5rem; margin-bottom: 6px;">⚡</div>
+            <div style="font-family: var(--font-heading); font-size: 1.1rem; font-weight: 800; margin-bottom: 4px;">In-Memory Message Broker</div>
+            <div style="font-size: 0.85rem; color: var(--text-sub);"><strong>Processing:</strong> Evaluates waste delta and traffic nodes</div>
+          </div>
+
+          <div class="arch-card-box">
+            <div style="font-size: 1.5rem; margin-bottom: 6px;">🧠</div>
+            <div style="font-family: var(--font-heading); font-size: 1.1rem; font-weight: 800; margin-bottom: 4px;">Core Optimization Engines</div>
+            <div style="font-size: 0.85rem; color: var(--text-sub);"><strong>Action:</strong> Updates Redis Pub/Sub channels</div>
+          </div>
+
+          <div class="arch-card-box">
+            <div style="font-size: 1.5rem; margin-bottom: 6px;">🗄️</div>
+            <div style="font-family: var(--font-heading); font-size: 1.1rem; font-weight: 800; margin-bottom: 4px;">Persistent Spatial Storage</div>
+            <div style="font-size: 0.85rem; color: var(--text-sub);"><strong>Spatial storage</strong> (PostGIS spatial tables)</div>
+          </div>
+        </div>
+
+        <div class="arch-grid-bottom">
+          <div class="beneficiary-box-sheet">
+            <div style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; color: var(--syn-emerald); text-transform: uppercase;">DISPATCHERS</div>
+            <div style="font-size: 0.95rem; font-weight: 600; color: #fff;">See real-time 3D alerts.</div>
+          </div>
+
+          <div class="beneficiary-box-sheet">
+            <div style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; color: var(--syn-emerald); text-transform: uppercase;">FIELD WORKERS · PWA</div>
+            <div style="font-size: 0.95rem; font-weight: 600; color: #fff;">Get optimized routes via PWA.</div>
+          </div>
+
+          <div class="beneficiary-box-sheet">
+            <div style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; color: var(--syn-emerald); text-transform: uppercase;">CITIZENS</div>
+            <div style="font-size: 0.95rem; font-weight: 600; color: #fff;">Get safe navigation paths.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet-footer-rail">
+        <div>Sub-50ms Event Propagation Mesh</div>
+        <div class="sheet-page-tag">UrbanSync AI 7</div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         PAGE 8: PROPOSED TECH STACK
+         ========================================================================== -->
+    <section class="pdf-page-sheet" id="page-8">
+      <div class="sheet-header-rail">
+        <div class="sheet-category-badge">ENGINEERING STACK</div>
+        <div class="sheet-meta-right">OPEN-SOURCE DEPLOYMENT</div>
+      </div>
+
+      <div class="sheet-title-center">
+        <h2 class="sheet-big-title">Proposed Tech Stack</h2>
+        <p class="sheet-sub-title">Battle-tested open-source frameworks, high-throughput asynchronous backends, and accelerated WebGL graphics.</p>
+      </div>
+
+      <div class="sheet-body-content">
+        <div class="stack-5-grid-sheet">
+          <div class="stack-pillar-sheet">
+            <div style="font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; color: var(--syn-amber); margin-bottom: 4px;">FRONTEND</div>
+            <div style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 6px;">Next.js 14</div>
+            <div style="font-size: 0.82rem; color: var(--text-sub); line-height: 1.45;">React Three Fiber, Three.js, Deck.gl spatial layers, and Tailwind CSS.</div>
+          </div>
+
+          <div class="stack-pillar-sheet">
+            <div style="font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; color: var(--syn-amber); margin-bottom: 4px;">BACKEND</div>
+            <div style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 6px;">FastAPI</div>
+            <div style="font-size: 0.82rem; color: var(--text-sub); line-height: 1.45;">Python 3.11+, Async REST endpoints, and high-frequency WebSocket streams.</div>
+          </div>
+
+          <div class="stack-pillar-sheet">
+            <div style="font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; color: var(--syn-amber); margin-bottom: 4px;">DATABASE</div>
+            <div style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 6px;">PostgreSQL</div>
+            <div style="font-size: 0.82rem; color: var(--text-sub); line-height: 1.45;">PostGIS spatial extensions paired with Redis 7.x in-memory Pub/Sub cache.</div>
+          </div>
+
+          <div class="stack-pillar-sheet">
+            <div style="font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; color: var(--syn-amber); margin-bottom: 4px;">AI / CV</div>
+            <div style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 6px;">YOLOv8 & OpenCV</div>
+            <div style="font-size: 0.82rem; color: var(--text-sub); line-height: 1.45;">ONNX/PyTorch inference, Homography matrices, and Google OR-Tools CVRP solver.</div>
+          </div>
+
+          <div class="stack-pillar-sheet">
+            <div style="font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; color: var(--syn-amber); margin-bottom: 4px;">SPATIAL APIS</div>
+            <div style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 6px;">NetworkX & Mapbox</div>
+            <div style="font-size: 0.82rem; color: var(--text-sub); line-height: 1.45;">OSMnx for directed graph routing, OpenStreetMap data, and Mapbox GL shaders.</div>
+          </div>
+        </div>
+
+        <div style="background: rgba(0, 240, 255, 0.08); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 8px; padding: 14px 22px; font-size: 0.92rem; line-height: 1.5;">
+          <strong style="color: var(--syn-cyan); font-family: var(--font-mono);">Integration Architecture:</strong> Asynchronous REST APIs handle administrative triggers, while dedicated WebSockets push live vehicle telemetry and raycast safety maps to client devices.
+        </div>
+      </div>
+
+      <div class="sheet-footer-rail">
+        <div>Full Open-Source Architecture</div>
+        <div class="sheet-page-tag">UrbanSync AI 8</div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         PAGE 9: FEASIBILITY & EXECUTION PLAN
+         ========================================================================== -->
+    <section class="pdf-page-sheet" id="page-9">
+      <div class="sheet-header-rail">
+        <div class="sheet-category-badge">ROADMAP & FEASIBILITY</div>
+        <div class="sheet-meta-right">EXECUTION TIMELINE</div>
+      </div>
+
+      <div class="sheet-title-center">
+        <h2 class="sheet-big-title">Feasibility & Execution Plan</h2>
+        <p class="sheet-sub-title"><strong>Approach:</strong> Microservices architecture deployed via Docker</p>
+      </div>
+
+      <div class="sheet-body-content">
+        <div class="roadmap-split-sheet">
+          <div class="roadmap-card-sheet">
+            <div style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">Milestones</div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(0,240,255,0.15); border: 1px solid var(--syn-cyan); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700; color: var(--syn-cyan);">1</div>
+                <div>Core API & database modeling</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(0,240,255,0.15); border: 1px solid var(--syn-cyan); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700; color: var(--syn-cyan);">2</div>
+                <div>CV model integration and OR-Tools setup</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(0,240,255,0.15); border: 1px solid var(--syn-cyan); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700; color: var(--syn-cyan);">3</div>
+                <div>3D spatial dashboard integration</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(0,240,255,0.15); border: 1px solid var(--syn-cyan); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700; color: var(--syn-cyan);">4</div>
+                <div>Real-time testing via simulation daemons</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="roadmap-card-sheet">
+            <div style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; color: var(--syn-amber); margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">Challenges</div>
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+              <li style="display: flex; align-items: center; gap: 8px;">▲ High-frequency WebSocket streams</li>
+              <li style="display: flex; align-items: center; gap: 8px;">▲ Sub-50ms event sync</li>
+              <li style="display: flex; align-items: center; gap: 8px;">▲ Accurate 3D spatial rendering</li>
+            </ul>
+
+            <div style="background: rgba(0, 255, 136, 0.12); border-left: 3px solid var(--syn-emerald); padding: 12px 16px; border-radius: 6px; font-size: 0.88rem; line-height: 1.45;">
+              <strong style="color: var(--syn-emerald);">Strategy:</strong> Parallel development of ML engines and Next.js frontend, unified through Docker-compose orchestration.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet-footer-rail">
+        <div>Docker Container Orchestration</div>
+        <div class="sheet-page-tag">UrbanSync AI 9</div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         PAGE 10: EXPECTED IMPACT & FUTURE SCOPE
+         ========================================================================== -->
+    <section class="pdf-page-sheet" id="page-10">
+      <div class="sheet-header-rail">
+        <div class="sheet-category-badge">METRICS & HORIZONS</div>
+        <div class="sheet-meta-right">QUANTIFIABLE VALUE</div>
+      </div>
+
+      <div class="sheet-title-center">
+        <h2 class="sheet-big-title">Expected Impact & Future Scope</h2>
+        <p class="sheet-sub-title">Transforming municipal operations with proven quantifiable metrics and infinite modular scalability.</p>
+      </div>
+
+      <div class="sheet-body-content">
+        <div class="split-layout-grid">
+          <div class="impact-6-grid-sheet">
+            <div class="impact-card-sheet">
+              <div style="font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; color: var(--syn-emerald); text-transform: uppercase;">IMPACT</div>
+              <div style="font-family: var(--font-heading); font-size: 1.4rem; font-weight: 900; color: var(--syn-cyan); margin: 2px 0;">30% faster</div>
+              <div style="font-size: 0.8rem; color: var(--text-sub);">emergency response</div>
+            </div>
+
+            <div class="impact-card-sheet">
+              <div style="font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; color: var(--syn-emerald); text-transform: uppercase;">IMPACT</div>
+              <div style="font-family: var(--font-heading); font-size: 1.4rem; font-weight: 900; color: var(--syn-emerald); margin: 2px 0;">Lower</div>
+              <div style="font-size: 0.8rem; color: var(--text-sub);">municipal carbon footprint</div>
+            </div>
+
+            <div class="impact-card-sheet">
+              <div style="font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; color: var(--syn-emerald); text-transform: uppercase;">IMPACT</div>
+              <div style="font-family: var(--font-heading); font-size: 1.4rem; font-weight: 900; color: var(--syn-amber); margin: 2px 0;">Safer</div>
+              <div style="font-size: 0.8rem; color: var(--text-sub);">urban transit</div>
+            </div>
+
+            <div class="impact-card-sheet">
+              <div style="font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; color: var(--syn-emerald); text-transform: uppercase;">BENEFITS</div>
+              <div style="font-family: var(--font-heading); font-size: 1.1rem; font-weight: 800; color: #fff;">Major cost savings</div>
+              <div style="font-size: 0.78rem; color: var(--text-sub);">For city councils by eliminating IoT hardware maintenance.</div>
+            </div>
+
+            <div class="impact-card-sheet">
+              <div style="font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; color: var(--syn-emerald); text-transform: uppercase;">SCALABILITY</div>
+              <div style="font-family: var(--font-heading); font-size: 1.1rem; font-weight: 800; color: #fff;">Any municipal ward</div>
+              <div style="font-size: 0.78rem; color: var(--text-sub);">Mapping OpenStreetMap data and connecting IP camera feeds.</div>
+            </div>
+
+            <div class="impact-card-sheet">
+              <div style="font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; color: var(--syn-emerald); text-transform: uppercase;">FUTURE</div>
+              <div style="font-family: var(--font-heading); font-size: 1.1rem; font-weight: 800; color: #fff;">Expanded civic ops</div>
+              <div style="font-size: 0.78rem; color: var(--text-sub);">Drone-based feed integration, automated ticketing via E-Challan.</div>
+            </div>
+          </div>
+
+          <div class="image-sheet-frame">
+            <img src="presentation_assets/slide_image_5.jpg" alt="Emergency Kuoni Ambulance Response Vehicle">
+            <div class="photo-credit">Photo: Bahnfrend, CC BY-SA 3.0, Wikimedia Commons</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet-footer-rail">
+        <div>Photo: Bahnfrend, CC BY-SA 3.0, Wikimedia Commons</div>
+        <div class="sheet-page-tag">UrbanSync AI 10</div>
+      </div>
+    </section>
+
+  </main>
+</body>
+</html>

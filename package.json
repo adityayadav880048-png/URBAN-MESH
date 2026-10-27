@@ -1,0 +1,23 @@
+{
+  "name": "urbansync-ai-chandigarh",
+  "version": "1.0.0",
+  "description": "UrbanSync AI: Integrated Smart City Platform & 3D Spatial Digital Twin for Chandigarh (Code Yudh Hackathon PS-02)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "smart-city",
+    "chandigarh",
+    "digital-twin",
+    "threejs",
+    "women-safety",
+    "urban-mobility",
+    "waste-management",
+    "hackathon",
+    "code-yudh"
+  ],
+  "author": "UrbanSync AI Team",
+  "license": "MIT"
+}
